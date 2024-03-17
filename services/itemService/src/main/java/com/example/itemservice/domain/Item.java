@@ -56,11 +56,11 @@ public class Item {
 • Администратор*/
     @ManyToMany
     @JoinTable(
-                name = "participates",
+                name = "item_persons",
                 joinColumns = { @JoinColumn(name = "item_id") },
                 inverseJoinColumns = { @JoinColumn(name = "person_id") }
         )
-        private List<Person> participates = new ArrayList<>();
+        private List<Person> persons = new ArrayList<>();
 
         public LocalDateTime getTime() {
             return created;

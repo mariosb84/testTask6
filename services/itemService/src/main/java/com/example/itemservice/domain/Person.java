@@ -5,6 +5,8 @@ import lombok.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Data
@@ -34,9 +36,15 @@ public class Person {
     @Size(min = 3, max = 8, message = "Password must be more than 3 and less 8")
     @Column(name = "person_password")
     private String password;
-    @NotNull()
-    @ManyToOne
-    @JoinColumn(name = "role_id")
-    private Role role;
+    @Size(min = 11, max = 11, message = "Phone must be 11")
+    @Column(name = "person_phone")
+    private int phone;
+    @ManyToMany
+    @JoinTable(
+            name = "person_roles",
+            joinColumns = { @JoinColumn(name = "person_id") },
+            inverseJoinColumns = { @JoinColumn(name = "role_id") }
+    )
+    private List<Role> roles = new ArrayList<>();
 
 }
