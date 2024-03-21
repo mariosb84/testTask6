@@ -1,5 +1,7 @@
 create table items (
-    person_id serial primary key NOT NULL,
-    person_login varchar(2000) NOT NULL unique,
-    person_password varchar(2000) NOT NULL
+    item_id serial PRIMARY KEY NOT NULL,
+    item_name TEXT NOT NULL unique,
+    item_itemText TEXT NOT NULL,
+    item_created timestamp NOT NULL,
+    status_id int references item_status(status_id)
 );
