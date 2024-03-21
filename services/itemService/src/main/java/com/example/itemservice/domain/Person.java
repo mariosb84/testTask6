@@ -42,7 +42,7 @@ public class Person {
     @ManyToMany
     @JoinTable(
             name = "person_roles",
-            joinColumns = { @JoinColumn(name = "person_id") },
+            joinColumns = { @JoinColumn(name = "person_role_id") },
             inverseJoinColumns = { @JoinColumn(name = "role_id") }
     )
     private List<Role> roles = new ArrayList<>();

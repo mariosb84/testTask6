@@ -1,16 +1,18 @@
 package com.example.itemservice.controller;
 
+import com.example.itemservice.domain.Item;
 import com.example.itemservice.domain.Person;
-import com.example.itemservice.domain.PersonDto;
 import com.example.itemservice.handlers.Operation;
+import com.example.itemservice.service.ItemService;
 import com.example.itemservice.service.PersonService;
+import com.example.itemservice.service.RoleService;
+import com.example.itemservice.service.StatusService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,38 +26,43 @@ import java.util.List;
 
 @AllArgsConstructor
 @RestController
-@RequestMapping("/person")
-public class PersonController {
+@RequestMapping("/item")
+public class ItemController {
+
+    private final ItemService items;
 
     private final PersonService persons;
 
-    private final BCryptPasswordEncoder encoder;
+    private final StatusService statuses;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PersonController.class.getSimpleName());
+    private final RoleService roleServices;
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemController.class.getSimpleName());
 
     private final ObjectMapper objectMapper;
 
+
     @GetMapping("/")
-    public List<Person> findAll() {
-        return this.persons.findAll();
+    public List<Item> findAll() {
+        return this.items.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Person> findById(@PathVariable int id) {
-        var person = this.persons.findById(id);
-        if (person.isPresent()) {
-            return new ResponseEntity<Person>(
-                    person.orElse(new Person()),
+    public ResponseEntity<Item> findById(@PathVariable int id) {
+        var item = this.items.findById(id);
+        if (item.isPresent()) {
+            return new ResponseEntity<Item>(
+                    item.orElse(new Item()),
                     HttpStatus.OK
             );
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена!");
     }
 
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<Person> create(@Valid @RequestBody Person person) {
-       if (person.getLogin() == null || person.getPassword() == null) {
+    public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
+
+        /*if (person.getLogin() == null || person.getPassword() == null) {
             throw new NullPointerException("Login and password mustn't be empty");
         }
         if (person.getPassword().length() < 3
@@ -64,34 +71,33 @@ public class PersonController {
             throw new IllegalArgumentException(
                     "Invalid password. Password length must be more than 3 characters.");
         }
-        person.setPassword(encoder.encode(person.getPassword()));
-        var result = this.persons.add(person);
-        return new ResponseEntity<Person>(
-                result.orElse(new Person()),
+        person.setPassword(encoder.encode(person.getPassword()));*/
+
+        var result = this.items.add(item);
+        return new ResponseEntity<Item>(
+                result.orElse(new Item()),
                 result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
         );
     }
 
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
-   /* public ResponseEntity<Boolean> update(@RequestBody Person person) {*/
-     public ResponseEntity<Boolean> update(@Valid @RequestBody PersonDto person) {
-        /*if ((this.persons.update(person))) { */
-           if ((this.persons.updatePatch(person))) {
+     public ResponseEntity<Boolean> update(@RequestBody Item item) {
+        if ((this.items.update(item))) {
             return ResponseEntity.ok().build();
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не обновлен!");
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не обновлена!");
     }
 
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
     public ResponseEntity<Boolean> delete(@Valid @PathVariable int id) {
-        Person person = new Person();
-        person.setId(id);
-        if ((this.persons.delete(person))) {
+        Item item = new Item();
+        item.setId(id);
+        if ((this.items.delete(item))) {
             return ResponseEntity.ok().build();
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не удален!");
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не удалена!");
     }
 
     @ExceptionHandler(value = { IllegalArgumentException.class })
