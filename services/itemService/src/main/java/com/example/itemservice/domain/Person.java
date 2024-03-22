@@ -33,12 +33,12 @@ public class Person {
     @Column(name = "person_login")
     private String login;
     @NotNull(message = "Password must be non null")
-    @Size(min = 3, max = 8, message = "Password must be more than 3 and less 8")
+    /*@Size(min = 3, max = 8, message = "Password must be more than 3 and less 8")*/
     @Column(name = "person_password")
     private String password;
     @Size(min = 11, max = 11, message = "Phone must be 11")
     @Column(name = "person_phone")
-    private int phone;
+    private String phone;
     @ManyToMany
     @JoinTable(
             name = "person_roles",

@@ -41,19 +41,9 @@ public class Item {
     @NotNull
     @Column(name = "item_created")
     private LocalDateTime created = LocalDateTime.now();
-    @NotNull()
     @ManyToOne
     @JoinColumn(name = "status_id")
     private Status status;
-    /*СТАТУС ЗАЯВКИ - • черновик
-• отправлено
-• принято
-• отклонено ПРИНЯТО/ОТКЛОНЕНО ОПЕРАТОРОМ*/
-    /*НОМЕР ТЕЛЕФОНА ПОЛЬЗОВАТЕЛЯ*/
-    /*ИМЯ ПОЛЬЗОВАТЕЛЯ*/
-    /* РОЛИ - • Пользователь
-• Оператор
-• Администратор*/
     @ManyToMany
     @JoinTable(
                 name = "item_persons",
