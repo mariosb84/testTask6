@@ -2,7 +2,9 @@ package com.example.itemservice.service;
 
 import com.example.itemservice.domain.Person;
 import com.example.itemservice.domain.PersonDto;
+import com.example.itemservice.domain.Role;
 import com.example.itemservice.repository.PersonRepository;
+import com.example.itemservice.repository.RoleRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +27,8 @@ public class PersonServiceData implements PersonService, UserDetailsService {
 
     private final PersonRepository personRepository;
 
+    private final RoleRepository roleRepository;
+
     @Override
     public List<Person> findAll() {
         return personRepository.findAll();
@@ -32,6 +36,7 @@ public class PersonServiceData implements PersonService, UserDetailsService {
 
     @Override
     public Optional<Person> add(Person person) {
+        person.setRoles(roleRepository.findAll());
       Person result = personRepository.save(person);
         if (Optional.of(result).isEmpty()) {
             return Optional.empty();
