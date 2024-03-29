@@ -1,4 +1,4 @@
-package com.example.itemservice.domain;
+package com.example.itemservice.domain.dto;
 
 import lombok.*;
 
@@ -11,11 +11,11 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Setter
 @Getter
-public class PersonDto {
+public class UserDto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @EqualsAndHashCode.Include
-    private int id;
+    private long id;
     @NonNull
     private String password;
 

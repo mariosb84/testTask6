@@ -17,9 +17,9 @@ import java.util.ArrayList;
 import static com.example.itemservice.filter.JWTAuthenticationFilter.*;
 
 
-public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
+public class JWTAuthorizationFilter /*extends BasicAuthenticationFilter */ {
 
-    public JWTAuthorizationFilter(AuthenticationManager authManager) {
+   /* public JWTAuthorizationFilter(AuthenticationManager authManager) {
         super(authManager);
     }
 
@@ -43,7 +43,7 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
     private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
         String token = request.getHeader(HEADER_STRING);
         if (token != null) {
-            /* parse the token. */
+            *//* parse the token. *//*
             String user = JWT.require(Algorithm.HMAC512(SECRET.getBytes()))
                     .build()
                     .verify(token.replace(TOKEN_PREFIX, ""))
@@ -55,6 +55,6 @@ public class JWTAuthorizationFilter extends BasicAuthenticationFilter {
             return null;
         }
         return null;
-    }
+    }*/
 
 }

@@ -1,9 +1,9 @@
 package com.example.itemservice.controller;
 
-import com.example.itemservice.domain.Person;
-import com.example.itemservice.domain.PersonDto;
+import com.example.itemservice.domain.model.User;
+import com.example.itemservice.domain.dto.UserDto;
 import com.example.itemservice.handlers.Operation;
-import com.example.itemservice.service.PersonService;
+import com.example.itemservice.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -25,27 +25,27 @@ import java.util.List;
 @AllArgsConstructor
 @RestController
 @RequestMapping("/person")
-public class PersonController {
+public class UserController {
 
-    private final PersonService persons;
+    private final UserService persons;
 
     private final BCryptPasswordEncoder encoder;
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(PersonController.class.getSimpleName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class.getSimpleName());
 
     private final ObjectMapper objectMapper;
 
     @GetMapping("/")
-    public List<Person> findAll() {
+    public List<User> findAll() {
         return this.persons.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Person> findById(@PathVariable int id) {
+    public ResponseEntity<User> findById(@PathVariable int id) {
         var person = this.persons.findById(id);
         if (person.isPresent()) {
-            return new ResponseEntity<Person>(
-                    person.orElse(new Person()),
+            return new ResponseEntity<User>(
+                    person.orElse(new User()),
                     HttpStatus.OK
             );
         }
@@ -54,20 +54,20 @@ public class PersonController {
 
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<Person> create(@Valid @RequestBody Person person) {
-       if (person.getLogin() == null || person.getPassword() == null) {
+    public ResponseEntity<User> create(@Valid @RequestBody User user) {
+       if (user.getUsername() == null || user.getPassword() == null) {
             throw new NullPointerException("Login and password mustn't be empty");
         }
-        if (person.getPassword().length() < 3
-                || person.getPassword().isEmpty()
-                || person.getPassword().isBlank()) {
+        if (user.getPassword().length() < 3
+                || user.getPassword().isEmpty()
+                || user.getPassword().isBlank()) {
             throw new IllegalArgumentException(
                     "Invalid password. Password length must be more than 3 characters.");
         }
-        person.setPassword(encoder.encode(person.getPassword()));
-        var result = this.persons.add(person);
-        return new ResponseEntity<Person>(
-                result.orElse(new Person()),
+        user.setPassword(encoder.encode(user.getPassword()));
+        var result = this.persons.add(user);
+        return new ResponseEntity<User>(
+                result.orElse(new User()),
                 result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
         );
     }
@@ -75,7 +75,7 @@ public class PersonController {
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
    /* public ResponseEntity<Boolean> update(@RequestBody Person person) {*/
-     public ResponseEntity<Boolean> update(@Valid @RequestBody PersonDto person) {
+     public ResponseEntity<Boolean> update(@Valid @RequestBody UserDto person) {
         /*if ((this.persons.update(person))) { */
            if ((this.persons.updatePatch(person))) {
             return ResponseEntity.ok().build();
@@ -86,9 +86,9 @@ public class PersonController {
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
     public ResponseEntity<Boolean> delete(@Valid @PathVariable int id) {
-        Person person = new Person();
-        person.setId(id);
-        if ((this.persons.delete(person))) {
+        User user = new User();
+        user.setId(id);
+        if ((this.persons.delete(user))) {
             return ResponseEntity.ok().build();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не удален!");

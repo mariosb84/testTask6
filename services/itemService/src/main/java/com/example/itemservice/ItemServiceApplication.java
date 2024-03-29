@@ -26,14 +26,16 @@ public class ItemServiceApplication extends SpringBootServletInitializer {
 		return liquibase;
 	}
 
-	public static void main(String[] args) {
-		SpringApplication.run(ItemServiceApplication.class, args);
-
-	}
 
 	@Bean
 	public BCryptPasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(ItemServiceApplication.class, args);
+
+	}
+
 
 }

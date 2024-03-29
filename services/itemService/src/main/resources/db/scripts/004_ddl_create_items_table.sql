@@ -3,5 +3,5 @@ create table items (
     item_name TEXT,
     item_itemText TEXT,
     item_created timestamp NOT NULL,
-    status_id int references item_status(status_id)
+    item_status item_status
 );

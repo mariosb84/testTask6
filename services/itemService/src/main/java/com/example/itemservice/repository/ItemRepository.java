@@ -1,6 +1,6 @@
 package com.example.itemservice.repository;
 
-import com.example.itemservice.domain.Item;
+import com.example.itemservice.domain.model.Item;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.List;

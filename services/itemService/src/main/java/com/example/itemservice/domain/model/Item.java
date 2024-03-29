@@ -1,4 +1,4 @@
-package com.example.itemservice.domain;
+package com.example.itemservice.domain.model;
 
 import com.example.itemservice.handlers.Operation;
 import lombok.*;
@@ -41,8 +41,9 @@ public class Item {
     @NotNull
     @Column(name = "item_created")
     private LocalDateTime created = LocalDateTime.now();
-    @ManyToOne
-    @JoinColumn(name = "status_id")
+    @Column(name = "item_status")
+    @NonNull
+    @Enumerated(EnumType.STRING)
     private Status status;
     @ManyToMany
     @JoinTable(
@@ -50,7 +51,7 @@ public class Item {
                 joinColumns = { @JoinColumn(name = "item_person_id") },
                 inverseJoinColumns = { @JoinColumn(name = "person_id") }
         )
-        private List<Person> persons = new ArrayList<>();
+        private List<User> users = new ArrayList<>();
 
         public LocalDateTime getTime() {
             return created;

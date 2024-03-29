@@ -1,12 +1,9 @@
 package com.example.itemservice.controller;
 
-import com.example.itemservice.domain.Item;
-import com.example.itemservice.domain.Person;
+import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.ItemService;
-import com.example.itemservice.service.PersonService;
-import com.example.itemservice.service.RoleService;
-import com.example.itemservice.service.StatusService;
+import com.example.itemservice.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -31,17 +28,14 @@ public class ItemController {
 
     private final ItemService items;
 
-    private final PersonService persons;
+    private final UserService persons;
 
-    private final StatusService statuses;
-
-    private final RoleService roleServices;
     private static final Logger LOGGER = LoggerFactory.getLogger(ItemController.class.getSimpleName());
 
     private final ObjectMapper objectMapper;
 
 
-    @GetMapping("/")
+    @GetMapping("/findAll")
     public List<Item> findAll() {
         return this.items.findAll();
     }

@@ -1,6 +1,6 @@
 package com.example.itemservice.service;
 
-import com.example.itemservice.domain.Item;
+import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.repository.ItemRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
