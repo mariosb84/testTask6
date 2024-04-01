@@ -13,7 +13,7 @@ public class SignUpRequest {
     @NotBlank(message = "Имя пользователя не может быть пустыми")
     private String username;
 
-    @Size(max = 255, message = "Длина пароля должна быть не более 255 символов")
+    @Size(min = 8, max = 255, message = "Длина пароля должна быть от 8 до 255 символов")
     private String password;
 
     @Size(min = 5, max = 255, message = "Адрес электронной почты должен содержать от 5 до 255 символов")

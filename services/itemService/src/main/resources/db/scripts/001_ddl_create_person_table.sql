@@ -3,6 +3,5 @@ create table person (
     person_login TEXT NOT NULL unique,
     person_password TEXT NOT NULL,
     person_email TEXT,
-    person_phone TEXT,
-    person_roles TEXT
+    person_phone TEXT
 );
