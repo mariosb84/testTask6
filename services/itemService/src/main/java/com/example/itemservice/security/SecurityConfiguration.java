@@ -1,6 +1,7 @@
 package com.example.itemservice.security;
 
-import com.example.itemservice.filter.JwtAuthenticationFilterNew;
+import com.example.itemservice.filter.JwtAuthenticationFilter;
+import com.example.itemservice.service.UserServiceNew;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +14,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import com.example.itemservice.service.UserServiceNew;
 
 import java.util.List;
 
@@ -28,7 +27,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
-    private final JwtAuthenticationFilterNew jwtAuthenticationFilter;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserServiceNew userServiceNew;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
@@ -50,7 +49,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(request -> request
                         /* Можно указать конкретный путь, * - 1 уровень вложенности, ** - любое количество уровней вложенности*/
 
-                       /* .requestMatchers("/auth/**").permitAll()
+                        /*.requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())*/
@@ -63,11 +62,6 @@ public class SecurityConfiguration {
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
-
- /*   @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }*/
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
