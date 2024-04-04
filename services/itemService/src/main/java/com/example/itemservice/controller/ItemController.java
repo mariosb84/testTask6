@@ -1,6 +1,8 @@
 package com.example.itemservice.controller;
 
 import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Role;
+import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.ItemService;
 import com.example.itemservice.service.UserService;
@@ -10,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -35,11 +38,14 @@ public class ItemController {
     private final ObjectMapper objectMapper;
 
 
+    /*НАЙТИ ВСЕ ЗАЯВКИ*/
     @GetMapping("/findAll")
+    @PreAuthorize("hasRole('USER') || hasRole('OPERATOR') || hasRole('ADMIN')")
     public List<Item> findAll() {
         return this.items.findAll();
     }
 
+    /*НАЙТИ ЗАЯВКУ ПО ID*/
     @GetMapping("/{id}")
     public ResponseEntity<Item> findById(@PathVariable int id) {
         var item = this.items.findById(id);
@@ -52,21 +58,40 @@ public class ItemController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена!");
     }
 
+    /*ОТПРАВИТЬ ЗАЯВКУ*/
+    @PostMapping("/send/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Item> sendItem(@PathVariable int id) {           /////////////////////////////////////
+        Item item = findById(id).getBody();
+        assert item != null;
+        item.setStatus(Status.Sent);
+        return null;
+    }
+
+    /*Просмотреть список заявок с возможностью сортировки по дате создания в оба
+    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+    по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/sort")
+    @PreAuthorize("hasRole('OPERATOR') || hasRole('ADMIN')")
+    public List<Item> findSortListItems() {           ///////////////////////////////////////////////
+        return null;
+    }
+
+    /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/sort/user")
+    @PreAuthorize("hasRole('USER')")
+    public List<Item> findSortListItemsByUser() {           ///////////////////////////////////////////////
+        return findSortListItems().stream().filter(i -> i.getUsers().contains(Role.ROLE_USER)).toList();
+    }
+
+    /*СОЗДАТЬ ЗАЯВКУ*/
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
-
-        /*if (person.getLogin() == null || person.getPassword() == null) {
-            throw new NullPointerException("Login and password mustn't be empty");
-        }
-        if (person.getPassword().length() < 3
-                || person.getPassword().isEmpty()
-                || person.getPassword().isBlank()) {
-            throw new IllegalArgumentException(
-                    "Invalid password. Password length must be more than 3 characters.");
-        }
-        person.setPassword(encoder.encode(person.getPassword()));*/
-
+        item.setStatus(Status.Draft);
         var result = this.items.add(item);
         return new ResponseEntity<Item>(
                 result.orElse(new Item()),
@@ -74,6 +99,7 @@ public class ItemController {
         );
     }
 
+    /*ОБНОВИТЬ ЗАЯВКУ*/
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
      public ResponseEntity<Boolean> update(@RequestBody Item item) {
@@ -83,6 +109,7 @@ public class ItemController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не обновлена!");
     }
 
+    /*УДАЛИТЬ ЗАЯВКУ*/
     @DeleteMapping("/{id}")
     @Validated(Operation.OnDelete.class)
     public ResponseEntity<Boolean> delete(@Valid @PathVariable int id) {
@@ -94,6 +121,7 @@ public class ItemController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не удалена!");
     }
 
+    /*EXEPTION HANDLER*/
     @ExceptionHandler(value = { IllegalArgumentException.class })
     public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
