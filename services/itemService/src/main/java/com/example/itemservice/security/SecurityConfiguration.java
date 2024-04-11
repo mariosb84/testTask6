@@ -46,17 +46,34 @@ public class SecurityConfiguration {
                 }))
                 /* Настройка доступа к конечным точкам*/
 
-                .authorizeHttpRequests(request -> request
-                        /* Можно указать конкретный путь, * - 1 уровень вложенности, ** - любое количество уровней вложенности*/
+                .authorizeHttpRequests(request -> {
+                    try {
+                        request
+                                /* Можно указать конкретный путь, * - 1 уровень вложенности, ** - любое количество уровней вложенности*/
 
-                        /*.requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
-                        .requestMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())*/
-                        .antMatchers("/auth/**").permitAll()
-                        .antMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
-                        .antMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated())
+                                /*.requestMatchers("/auth/**").permitAll()
+                                .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
+                                .requestMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
+                                .anyRequest().authenticated())*/
+                                .antMatchers("/auth/**").permitAll()
+                                .antMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
+                                .antMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
+                                .anyRequest().authenticated()
+                                .and()
+                                .formLogin()
+                                //.loginPage("/auth/login/")
+                                .defaultSuccessUrl("/item/")
+                                //.failureUrl("/login?error=true")
+                                .permitAll()
+                                .and()
+                                .logout()
+                               // .logoutSuccessUrl("/login?logout=true")
+                                .invalidateHttpSession(true)
+                                .permitAll();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
