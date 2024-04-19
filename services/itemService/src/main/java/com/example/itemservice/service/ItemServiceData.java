@@ -5,6 +5,7 @@ import com.example.itemservice.repository.ItemRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,6 +42,27 @@ public class ItemServiceData implements ItemService {
     @Override
     public boolean delete(Item item) {
         return itemRepository.findById(item.getId()).isEmpty();
+    }
+
+
+    /*Просмотреть список заявок с возможностью сортировки по дате создания в оба
+    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+    по 5 элементов, фильтрация по статусу*/
+    //надо сделать пагинацию по Item
+    @Override
+    public List<Item> sort() {
+        return  findAll().
+                stream().sorted(Comparator.comparing(
+                        Item::getCreated)).
+                toList();
+    }
+
+    @Override
+    public List<Item> reverseSort() {
+        return findAll().
+                stream().sorted(Comparator.comparing(
+                Item::getCreated).reversed()).
+                toList();
     }
 
 }

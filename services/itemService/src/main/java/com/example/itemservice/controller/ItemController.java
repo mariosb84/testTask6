@@ -21,6 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -58,7 +59,7 @@ public class ItemController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена!");
     }
 
-    /*ОТПРАВИТЬ ЗАЯВКУ*/
+    /*ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ*/
     @PostMapping("/send/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Item> sendItem(@PathVariable int id) {           /////////////////////////////////////
@@ -74,7 +75,16 @@ public class ItemController {
     @GetMapping("/sort")
     @PreAuthorize("hasRole('OPERATOR') || hasRole('ADMIN')")
     public List<Item> findSortListItems() {           ///////////////////////////////////////////////
-        return null;
+        return items.sort();
+    }
+
+    /*Просмотреть список заявок с возможностью сортировки по дате создания в оба
+ направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+ по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/reverseSort")
+    @PreAuthorize("hasRole('OPERATOR') || hasRole('ADMIN')")
+    public List<Item> findReverseSortListItems() {           ///////////////////////////////////////////////
+        return items.reverseSort();
     }
 
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
@@ -86,7 +96,7 @@ public class ItemController {
         return findSortListItems().stream().filter(i -> i.getUsers().contains(Role.ROLE_USER)).toList();
     }
 
-    /*СОЗДАТЬ ЗАЯВКУ*/
+    /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
     @PreAuthorize("hasRole('USER')")

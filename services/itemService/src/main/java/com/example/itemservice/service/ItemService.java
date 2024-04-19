@@ -17,5 +17,9 @@ public interface ItemService {
 
     boolean delete(Item item);
 
+    List<Item> sort();
+
+    List<Item> reverseSort();
+
 
 }
