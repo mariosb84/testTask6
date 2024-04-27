@@ -1,6 +1,9 @@
 package com.example.itemservice.service;
 
 import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Status;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,9 +20,7 @@ public interface ItemService {
 
     boolean delete(Item item);
 
-    List<Item> sort();
-
-    List<Item> reverseSort();
+    Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
 
 
 }

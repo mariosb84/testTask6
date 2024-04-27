@@ -1,7 +1,6 @@
 package com.example.itemservice.controller;
 
 import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.ItemService;
@@ -10,6 +9,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,8 +22,9 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.io.IOException;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -69,22 +72,37 @@ public class ItemController {
         return null;
     }
 
-    /*Просмотреть список заявок с возможностью сортировки по дате создания в оба
+    /*Просмотреть список заявок admin-a с возможностью сортировки по дате создания в оба
     направления (как от самой старой к самой новой, так и наоборот) и пагинацией
     по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/sort")
-    @PreAuthorize("hasRole('OPERATOR') || hasRole('ADMIN')")
-    public List<Item> findSortListItems() {           ///////////////////////////////////////////////
-        return items.sort();
-    }
+    @GetMapping("/sort/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+        public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,  // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
+            @RequestParam(value = "status", defaultValue = "0")@Min(0) @Max(2) Integer status
+    ) {
+        Status inputStatus;
+        if (status == 0) {
+            inputStatus = Status.Sent;
+        } else if (status == 1) {
+            inputStatus = Status.Accepted;
+        } else {
+            inputStatus = Status.Rejected;
+        }
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc", inputStatus);
+        }
 
-    /*Просмотреть список заявок с возможностью сортировки по дате создания в оба
+    /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
  направления (как от самой старой к самой новой, так и наоборот) и пагинацией
  по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/reverseSort")
-    @PreAuthorize("hasRole('OPERATOR') || hasRole('ADMIN')")
-    public List<Item> findReverseSortListItems() {           ///////////////////////////////////////////////
-        return items.reverseSort();
+    @GetMapping("/sort/operator")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection  // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
+    ) {
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc", Status.Sent);
     }
 
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
@@ -92,8 +110,11 @@ public class ItemController {
    по 5 элементов, фильтрация по статусу*/
     @GetMapping("/sort/user")
     @PreAuthorize("hasRole('USER')")
-    public List<Item> findSortListItemsByUser() {           ///////////////////////////////////////////////
-        return findSortListItems().stream().filter(i -> i.getUsers().contains(Role.ROLE_USER)).toList();
+    public ResponseEntity<Page<Item>> findSortPageItemsByUser(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection  // СДЕЛАТЬ ПРОСМОТР ТОЛЬКО ЗАЯВОК ЭТОГО ПОЛЬЗОВАТЕЛЯ
+    ) {
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc", Status.Draft);
     }
 
     /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
@@ -129,6 +150,24 @@ public class ItemController {
             return ResponseEntity.ok().build();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не удалена!");
+    }
+
+    /*универсальный метод сортировки
+    Просмотреть список заявок с возможностью сортировки по дате создания в оба
+    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+    по 5 элементов, фильтрация по статусу*/
+    private  ResponseEntity<Page<Item>> findSortByConditionPageItems(
+            @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
+            @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
+            String direction,
+            Status status
+    ) {
+        return  new ResponseEntity<>(items.findAllItemsByStatus(
+                PageRequest.of(offset, limit,
+                        Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
+                                        : Sort.Order.desc("created")))),
+                status),
+                HttpStatus.OK);
     }
 
     /*EXEPTION HANDLER*/

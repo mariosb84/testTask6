@@ -4,6 +4,7 @@ public enum Status {
         Draft,
 
         Sent,
+
         Accepted,
 
         Rejected
