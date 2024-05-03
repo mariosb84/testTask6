@@ -2,6 +2,7 @@ package com.example.itemservice.service;
 
 import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -20,7 +21,7 @@ public interface ItemService {
 
     boolean delete(Item item);
 
-    Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
+    Page<Item> findAllItemsByStatus(Pageable pageable, Status status, List<User> users);
 
 
 }

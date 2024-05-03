@@ -2,6 +2,7 @@ package com.example.itemservice.service;
 
 import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
 import com.example.itemservice.repository.ItemRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -48,8 +49,8 @@ public class ItemServiceData implements ItemService {
     }
 
     @Override
-    public Page<Item> findAllItemsByStatus(Pageable pageable, Status status) {
-        return itemRepository.findAllItemsByStatus(pageable, status);
+    public Page<Item> findAllItemsByStatus(Pageable pageable, Status status, List<User> users) {
+        return itemRepository.findAllItemsByStatus(pageable, status, users);
     }
 
 }

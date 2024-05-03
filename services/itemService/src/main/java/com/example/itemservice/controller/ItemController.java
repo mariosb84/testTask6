@@ -2,6 +2,7 @@ package com.example.itemservice.controller;
 
 import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.ItemService;
 import com.example.itemservice.service.UserService;
@@ -25,6 +26,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -90,7 +92,8 @@ public class ItemController {
             inputStatus = Status.Rejected;
         }
         return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", inputStatus);
+                sortDirection == 0 ? "asc" : "desc", inputStatus,
+                new ArrayList<User>.of(new User())); ////////////////////////////////////////////////////////////////////////////////////
         }
 
     /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
@@ -102,7 +105,8 @@ public class ItemController {
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection  // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
     ) {
         return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", Status.Sent);
+                sortDirection == 0 ? "asc" : "desc", Status.Sent,
+                new ArrayList<User>.of(new User()));          ////////////////////////////////////////////////////////////////////////////
     }
 
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
@@ -111,10 +115,12 @@ public class ItemController {
     @GetMapping("/sort/user")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<Item>> findSortPageItemsByUser(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection  // СДЕЛАТЬ ПРОСМОТР ТОЛЬКО ЗАЯВОК ЭТОГО ПОЛЬЗОВАТЕЛЯ
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection
+            // СДЕЛАТЬ ПРОСМОТР ТОЛЬКО ЗАЯВОК ЭТОГО ПОЛЬЗОВАТЕЛЯ ???????????(has ROLE_USER )
     ) {
         return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", Status.Draft);
+                sortDirection == 0 ? "asc" : "desc", Status.Draft,
+                new ArrayList<User>.of(new User())); ////////////////////////////////////////////////////////////////////////////////////
     }
 
     /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
@@ -160,13 +166,15 @@ public class ItemController {
             @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
             @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
             String direction,
-            Status status
+            Status status,
+            List<User> users
     ) {
         return  new ResponseEntity<>(items.findAllItemsByStatus(
                 PageRequest.of(offset, limit,
                         Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
                                         : Sort.Order.desc("created")))),
-                status),
+                status,
+                users),
                 HttpStatus.OK);
     }
 
