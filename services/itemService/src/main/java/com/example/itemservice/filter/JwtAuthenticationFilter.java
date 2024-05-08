@@ -1,6 +1,7 @@
 package com.example.itemservice.filter;
 
 import com.example.itemservice.service.JwtService;
+import com.example.itemservice.service.UserServiceData;
 import com.example.itemservice.service.UserServiceNew;
 import liquibase.util.StringUtils;
 import lombok.NonNull;
@@ -25,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String BEARER_PREFIX = "Bearer ";
     public static final String HEADER_NAME = "Authorization";
     private final JwtService jwtService;
-    private final UserServiceNew userServiceNew;
+    private final UserServiceData userService;
 
     @Override
     protected void doFilterInternal(
@@ -46,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var username = jwtService.extractUserName(jwt);
 
         if (StringUtils.isNotEmpty(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userServiceNew
+            UserDetails userDetails = userService
                     .userDetailsService()
                     .loadUserByUsername(username);
 

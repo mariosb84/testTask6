@@ -106,7 +106,7 @@ public class ItemController {
     ) {
         return findSortByConditionPageItems(0, 5,
                 sortDirection == 0 ? "asc" : "desc", Status.Sent,
-                new ArrayList<User>.of(new User()));          ////////////////////////////////////////////////////////////////////////////
+                items;          ////////////////////////////////////////////////////////////////////////////
     }
 
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
@@ -115,12 +115,13 @@ public class ItemController {
     @GetMapping("/sort/user")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<Item>> findSortPageItemsByUser(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "userName", defaultValue = "Guest") String userName
             // СДЕЛАТЬ ПРОСМОТР ТОЛЬКО ЗАЯВОК ЭТОГО ПОЛЬЗОВАТЕЛЯ ???????????(has ROLE_USER )
     ) {
         return findSortByConditionPageItems(0, 5,
                 sortDirection == 0 ? "asc" : "desc", Status.Draft,
-                new ArrayList<User>.of(new User())); ////////////////////////////////////////////////////////////////////////////////////
+                items.findAllItemContainsUser(persons.findUserByUsername(userName))); ////////////////////////////////////////////////////////////////////////////////////
     }
 
     /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/

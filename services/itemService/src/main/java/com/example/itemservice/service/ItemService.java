@@ -23,5 +23,7 @@ public interface ItemService {
 
     Page<Item> findAllItemsByStatus(Pageable pageable, Status status, List<User> users);
 
+    List<Item> findAllItemContainsUser(User user);
+
 
 }

@@ -17,7 +17,7 @@ import static com.example.itemservice.domain.model.Role.ROLE_USER;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserServiceNew userServiceNew;
+    private final UserServiceData userService;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -40,7 +40,7 @@ public class AuthenticationService {
 
        /* var user = new User(request.getUsername(), request.getEmail(), );*/
 
-        userServiceNew.create(user);
+        userService.add(user);
 
         var jwt = jwtService.generateToken(user);
         return new JwtAuthenticationResponse(jwt);
@@ -58,7 +58,7 @@ public class AuthenticationService {
                 request.getPassword()
         ));
 
-        var user = userServiceNew
+        var user = userService
                 .userDetailsService()
                 .loadUserByUsername(request.getUsername());
 

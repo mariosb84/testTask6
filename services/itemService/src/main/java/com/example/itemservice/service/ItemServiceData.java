@@ -53,4 +53,9 @@ public class ItemServiceData implements ItemService {
         return itemRepository.findAllItemsByStatus(pageable, status, users);
     }
 
+    @Override
+    public List<Item> findAllItemContainsUser(User user) {
+        return itemRepository.findAllItemContainsUser(user);
+    }
+
 }

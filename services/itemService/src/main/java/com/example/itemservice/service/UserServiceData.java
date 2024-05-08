@@ -5,6 +5,7 @@ import com.example.itemservice.domain.dto.UserDto;
 import com.example.itemservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+import static com.example.itemservice.domain.model.Role.ROLE_ADMIN;
 import static com.example.itemservice.domain.model.Role.ROLE_USER;
 import static java.util.Collections.emptyList;
 
@@ -32,14 +34,23 @@ public class UserServiceData implements UserService, UserDetailsService {
         return userRepository.findAll();
     }
 
+    /**
+     * Создание пользователя
+     *
+     * @return созданный пользователь
+     */
     @Override
     public Optional<User> add(User user) {
-        user.setRoles(List.of(ROLE_USER));
-      User result = userRepository.save(user);
-        if (Optional.of(result).isEmpty()) {
-            return Optional.empty();
+        if (userRepository.existsByUsername(user.getUsername())) {
+            /* Заменить на свои исключения*/
+            throw new RuntimeException("Пользователь с таким именем уже существует");
         }
-        return Optional.of(result);
+
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Пользователь с таким email уже существует");
+        }
+        user.setRoles(List.of(ROLE_USER));
+        return Optional.ofNullable(save(user));
     }
 
     @Override
@@ -72,13 +83,69 @@ public class UserServiceData implements UserService, UserDetailsService {
         return false;
     }
 
+    /**
+     * Получение пользователя по имени пользователя
+     *
+     * @return пользователь
+     */
+    @Override
+    public User findUserByUsername(String username) {
+        return userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+    }
+
+    /**
+     * Сохранение пользователя
+     *
+     * @return сохраненный пользователь
+     */
+    @Override
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findUserByUsername(username).orElseThrow();
         if (user == null) {
             throw new UsernameNotFoundException(username);
         }
-        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), emptyList());
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(), user.getPassword(), emptyList());
+    }
+
+    /**
+     * Получение пользователя по имени пользователя
+     * <p>
+     * Нужен для Spring Security
+     *
+     * @return пользователь
+     */
+    public UserDetailsService userDetailsService() {
+        return this::findUserByUsername;
+    }
+
+    /**
+     * Получение текущего пользователя
+     *
+     * @return текущий пользователь
+     */
+    public User getCurrentUser() {
+        /* Получение имени пользователя из контекста Spring Security*/
+        var username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return findUserByUsername(username);
+    }
+
+    /**
+     * Выдача прав администратора текущему пользователю
+     * <p>
+     * Нужен для демонстрации
+     */
+    @Deprecated
+    public void getAdmin() {
+        var user = getCurrentUser();
+        user.setRoles(List.of(ROLE_ADMIN));
+        save(user);
     }
 
 }

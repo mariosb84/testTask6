@@ -22,4 +22,8 @@ public interface UserService {
 
     boolean updatePatch(UserDto userDto);
 
+    User findUserByUsername(String username);
+
+    public User save(User user);
+
 }

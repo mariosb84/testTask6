@@ -1,6 +1,7 @@
 package com.example.itemservice.security;
 
 import com.example.itemservice.filter.JwtAuthenticationFilter;
+import com.example.itemservice.service.UserServiceData;
 import com.example.itemservice.service.UserServiceNew;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +29,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @RequiredArgsConstructor
 public class SecurityConfiguration {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserServiceNew userServiceNew;
+    private final UserServiceData userService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Bean
@@ -83,7 +84,7 @@ public class SecurityConfiguration {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userServiceNew.userDetailsService());
+        authProvider.setUserDetailsService(userService.userDetailsService());
         authProvider.setPasswordEncoder(bCryptPasswordEncoder);
         return authProvider;
     }
