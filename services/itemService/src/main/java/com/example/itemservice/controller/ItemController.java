@@ -120,8 +120,9 @@ public class ItemController {
             // СДЕЛАТЬ ПРОСМОТР ТОЛЬКО ЗАЯВОК ЭТОГО ПОЛЬЗОВАТЕЛЯ ???????????(has ROLE_USER )
     ) {
         return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", Status.Draft,
-                items.findAllItemContainsUser(persons.findUserByUsername(userName))); ////////////////////////////////////////////////////////////////////////////////////
+                sortDirection == 0 ? "asc" : "desc",
+                Status.Draft,
+                List.of(persons.findUserByUsername(userName))); ////////////////////////////////////////////////////////////////////////////////////
     }
 
     /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
