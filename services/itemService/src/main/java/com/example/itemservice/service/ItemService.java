@@ -25,5 +25,7 @@ public interface ItemService {
 
     List<Item> findAllItemContainsUser(User user);
 
+    boolean itemContains(Item item, Status status, String userName);
+
 
 }

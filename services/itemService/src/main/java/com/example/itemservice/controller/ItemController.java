@@ -26,9 +26,10 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import static com.example.itemservice.domain.model.Status.Draft;
 
 @AllArgsConstructor
 @RestController
@@ -43,6 +44,119 @@ public class ItemController {
 
     private final ObjectMapper objectMapper;
 
+
+    /*МЕТОДЫ USER-а:_______________________________________________________________________________*/
+
+    /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/sort/user")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByUser(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "userName", defaultValue = "Guest") String userName
+    ) {
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc",
+                Draft,
+                List.of(persons.findUserByUsername(userName)));
+    }
+
+    /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
+    @PostMapping("/")
+    @Validated(Operation.OnCreate.class)
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
+        item.setStatus(Draft);
+        var result = this.items.add(item);
+        return new ResponseEntity<Item>(
+                result.orElse(new Item()),
+                result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
+        );
+    }
+
+    /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ*/
+    @PostMapping("/send/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Item> sendItem(
+            @PathVariable int id,
+            @RequestParam(value = "userName", defaultValue = "Guest") String userName) {
+        Item item = findById(id).getBody();
+        assert item != null;
+        if (items.itemContains(item, Draft, userName)) {
+            item.setStatus(Status.Sent);
+            update(item);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"черновик\")/либо заявка создана другим пользователем)!");
+    }
+
+    /* МЕТОД РЕДАКТИРОВАНИЯ  ЗАЯВОК В СТАТУСЕ "ЧЕРНОВИК", СОЗДАННЫХ ПОЛЬЗОВАТЕЛЕМ*/
+
+    @PostMapping("/editUserItem/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Item> editUserItem(
+            @PathVariable int id,
+            @RequestParam(value = "userName", defaultValue = "Guest") String userName) {
+        Item item = findById(id).getBody();
+        assert item != null;
+        if (items.itemContains(item, Draft, userName)) {
+            update(item);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"черновик\")/либо заявка создана другим пользователем)!");
+    }
+
+
+    /*МЕТОДЫ OPERATOR-а:_______________________________________________________________________*/
+
+    // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ ПО ЧАСТИ ИМЕНИ , ID И ТД
+
+    /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
+ направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+ по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/sort/operator")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "userName", defaultValue = "Guest") String userName
+    ) {
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc",
+                Status.Sent,
+                List.of(persons.findUserByUsername(userName)));          /////////////////////////////
+    }
+
+    /*МЕТОДЫ ADMIN-а:___________________________________________________________________________*/
+
+    // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
+
+    /*Просмотреть список заявок admin-a с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/sort/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "status", defaultValue = "0")@Min(0) @Max(2) Integer status,
+            @RequestParam(value = "userName", defaultValue = "Guest") String userName
+    ) {
+        Status inputStatus;
+        if (status == 0) {
+            inputStatus = Status.Sent;
+        } else if (status == 1) {
+            inputStatus = Status.Accepted;
+        } else {
+            inputStatus = Status.Rejected;
+        }
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc", inputStatus,
+                List.of(persons.findUserByUsername(userName))); ////////////////////////////
+    }
+
+    /*ОБЩИЕ МЕТОДЫ:___________________________________________________________________________________*/
 
     /*НАЙТИ ВСЕ ЗАЯВКИ*/
     @GetMapping("/findAll")
@@ -62,80 +176,6 @@ public class ItemController {
             );
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена!");
-    }
-
-    /*ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ*/
-    @PostMapping("/send/{id}")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Item> sendItem(@PathVariable int id) {           /////////////////////////////////////
-        Item item = findById(id).getBody();
-        assert item != null;
-        item.setStatus(Status.Sent);
-        return null;
-    }
-
-    /*Просмотреть список заявок admin-a с возможностью сортировки по дате создания в оба
-    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
-    по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/sort/admin")
-    @PreAuthorize("hasRole('ADMIN')")
-        public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,  // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
-            @RequestParam(value = "status", defaultValue = "0")@Min(0) @Max(2) Integer status
-    ) {
-        Status inputStatus;
-        if (status == 0) {
-            inputStatus = Status.Sent;
-        } else if (status == 1) {
-            inputStatus = Status.Accepted;
-        } else {
-            inputStatus = Status.Rejected;
-        }
-        return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", inputStatus,
-                new ArrayList<User>.of(new User())); ////////////////////////////////////////////////////////////////////////////////////
-        }
-
-    /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
- направления (как от самой старой к самой новой, так и наоборот) и пагинацией
- по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/sort/operator")
-    @PreAuthorize("hasRole('OPERATOR')")
-    public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection  // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
-    ) {
-        return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", Status.Sent,
-                items;          ////////////////////////////////////////////////////////////////////////////
-    }
-
-    /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
-   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
-   по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/sort/user")
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Page<Item>> findSortPageItemsByUser(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
-            @RequestParam(value = "userName", defaultValue = "Guest") String userName
-            // СДЕЛАТЬ ПРОСМОТР ТОЛЬКО ЗАЯВОК ЭТОГО ПОЛЬЗОВАТЕЛЯ ???????????(has ROLE_USER )
-    ) {
-        return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc",
-                Status.Draft,
-                List.of(persons.findUserByUsername(userName))); ////////////////////////////////////////////////////////////////////////////////////
-    }
-
-    /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
-    @PostMapping("/")
-    @Validated(Operation.OnCreate.class)
-    @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
-        item.setStatus(Status.Draft);
-        var result = this.items.add(item);
-        return new ResponseEntity<Item>(
-                result.orElse(new Item()),
-                result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
-        );
     }
 
     /*ОБНОВИТЬ ЗАЯВКУ*/
@@ -185,10 +225,12 @@ public class ItemController {
     public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() { {
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() {
+            {
             put("message", e.getMessage());
             put("type", e.getClass());
-        }}));
+          }
+        }));
         LOGGER.error(e.getLocalizedMessage());
     }
 

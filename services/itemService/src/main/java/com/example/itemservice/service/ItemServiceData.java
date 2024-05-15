@@ -9,9 +9,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+
+import static com.example.itemservice.domain.model.Status.Draft;
 
 @Service
 @AllArgsConstructor
@@ -56,6 +57,12 @@ public class ItemServiceData implements ItemService {
     @Override
     public List<Item> findAllItemContainsUser(User user) {
         return itemRepository.findAllItemContainsUser(user);
+    }
+
+    @Override
+    public boolean itemContains(Item item, Status status, String userName) {
+        return item.getStatus().equals(status)
+                && (item.getUsers().stream().map(User::getUsername).anyMatch(s -> s.equals(userName)));
     }
 
 }
