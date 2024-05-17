@@ -21,7 +21,9 @@ public interface ItemService {
 
     boolean delete(Item item);
 
-    Page<Item> findAllItemsByStatus(Pageable pageable, Status status, List<User> users);
+    Page<Item> findAllItemsByStatusAndUsers(Pageable pageable, Status status, List<User> users);
+
+    Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
 
     List<Item> findAllItemContainsUser(User user);
 

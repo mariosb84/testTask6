@@ -56,7 +56,7 @@ public class ItemController {
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
             @RequestParam(value = "userName", defaultValue = "Guest") String userName
     ) {
-        return findSortByConditionPageItems(0, 5,
+        return findSortByConditionPageItemsIncludeUsers(0, 5,
                 sortDirection == 0 ? "asc" : "desc",
                 Draft,
                 List.of(persons.findUserByUsername(userName)));
@@ -125,8 +125,7 @@ public class ItemController {
     ) {
         return findSortByConditionPageItems(0, 5,
                 sortDirection == 0 ? "asc" : "desc",
-                Status.Sent,
-                List.of(persons.findUserByUsername(userName)));          /////////////////////////////
+                Status.Sent);
     }
 
     /*МЕТОДЫ ADMIN-а:___________________________________________________________________________*/
@@ -152,8 +151,7 @@ public class ItemController {
             inputStatus = Status.Rejected;
         }
         return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", inputStatus,
-                List.of(persons.findUserByUsername(userName))); ////////////////////////////
+                sortDirection == 0 ? "asc" : "desc", inputStatus);
     }
 
     /*ОБЩИЕ МЕТОДЫ:___________________________________________________________________________________*/
@@ -200,23 +198,42 @@ public class ItemController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не удалена!");
     }
 
-    /*универсальный метод сортировки
+    /*универсальный метод сортировки, включая USER-s List
     Просмотреть список заявок с возможностью сортировки по дате создания в оба
     направления (как от самой старой к самой новой, так и наоборот) и пагинацией
     по 5 элементов, фильтрация по статусу*/
-    private  ResponseEntity<Page<Item>> findSortByConditionPageItems(
+    private  ResponseEntity<Page<Item>> findSortByConditionPageItemsIncludeUsers(
             @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
             @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
             String direction,
             Status status,
             List<User> users
     ) {
-        return  new ResponseEntity<>(items.findAllItemsByStatus(
+        return  new ResponseEntity<>(items.findAllItemsByStatusAndUsers(
                 PageRequest.of(offset, limit,
                         Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
                                         : Sort.Order.desc("created")))),
                 status,
                 users),
+                HttpStatus.OK);
+    }
+
+    /*универсальный метод сортировки
+   Просмотреть список заявок с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу*/
+    private  ResponseEntity<Page<Item>> findSortByConditionPageItems(
+            @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
+            @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
+            String direction,
+            Status status
+    ) {
+        return  new ResponseEntity<>(items.findAllItemsByStatus(
+                PageRequest.of(offset, limit,
+                        Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
+                                : Sort.Order.desc("created")))),
+                status
+                ),
                 HttpStatus.OK);
     }
 

@@ -13,7 +13,9 @@ public interface ItemRepository extends CrudRepository<Item, Integer> {
 
     List<Item> findAll();
 
-    Page<Item> findAllItemsByStatus(Pageable pageable, Status status, List<User> users);
+    Page<Item> findAllItemsByStatusAndUsers(Pageable pageable, Status status, List<User> users);
+
+    Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
 
     List<Item> findAllItemContainsUser(User user);
 

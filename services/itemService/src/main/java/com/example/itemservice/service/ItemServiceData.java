@@ -50,8 +50,13 @@ public class ItemServiceData implements ItemService {
     }
 
     @Override
-    public Page<Item> findAllItemsByStatus(Pageable pageable, Status status, List<User> users) {
-        return itemRepository.findAllItemsByStatus(pageable, status, users);
+    public Page<Item> findAllItemsByStatusAndUsers(Pageable pageable, Status status, List<User> users) {
+        return itemRepository.findAllItemsByStatusAndUsers(pageable, status, users);
+    }
+
+    @Override
+    public Page<Item> findAllItemsByStatus(Pageable pageable, Status status) {
+        return itemRepository.findAllItemsByStatus(pageable, status);
     }
 
     @Override
