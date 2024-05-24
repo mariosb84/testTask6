@@ -66,8 +66,10 @@ public class ItemServiceData implements ItemService {
 
     @Override
     public boolean itemContains(Item item, Status status, String userName) {
-        return item.getStatus().equals(status)
-                && (item.getUsers().stream().map(User::getUsername).anyMatch(s -> s.equals(userName)));
+        var statusEqual = item.getStatus().equals(status);
+        return userName != null ? statusEqual
+                && (item.getUsers().stream().map(User::getUsername).
+                anyMatch(s -> s.equals(userName))) : statusEqual;
     }
 
 }

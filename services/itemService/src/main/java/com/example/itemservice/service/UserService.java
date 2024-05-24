@@ -26,4 +26,6 @@ public interface UserService {
 
     public User save(User user);
 
+    List<User> findUserByUsernameContains(String username);
+
 }

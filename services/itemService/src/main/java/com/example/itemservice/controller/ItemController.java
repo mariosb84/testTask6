@@ -29,8 +29,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.example.itemservice.domain.model.Status.Draft;
-
 @AllArgsConstructor
 @RestController
 @RequestMapping("/item")
@@ -47,6 +45,8 @@ public class ItemController {
 
     /*МЕТОДЫ USER-а:_______________________________________________________________________________*/
 
+    //UserName должно вставляться из security????
+
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
@@ -58,7 +58,7 @@ public class ItemController {
     ) {
         return findSortByConditionPageItemsIncludeUsers(0, 5,
                 sortDirection == 0 ? "asc" : "desc",
-                Draft,
+                Status.Draft,
                 List.of(persons.findUserByUsername(userName)));
     }
 
@@ -67,13 +67,15 @@ public class ItemController {
     @Validated(Operation.OnCreate.class)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
-        item.setStatus(Draft);
+        item.setStatus(Status.Draft);
         var result = this.items.add(item);
         return new ResponseEntity<Item>(
                 result.orElse(new Item()),
                 result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
         );
     }
+
+    //UserName должно вставляться из security????
 
     /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ*/
     @PostMapping("/send/{id}")
@@ -83,7 +85,7 @@ public class ItemController {
             @RequestParam(value = "userName", defaultValue = "Guest") String userName) {
         Item item = findById(id).getBody();
         assert item != null;
-        if (items.itemContains(item, Draft, userName)) {
+        if (items.itemContains(item, Status.Draft, userName)) {
             item.setStatus(Status.Sent);
             update(item);
         }
@@ -91,6 +93,8 @@ public class ItemController {
                 + "возможно - неверный статус заявки"
                 + "(не \"черновик\")/либо заявка создана другим пользователем)!");
     }
+
+    //UserName должно вставляться из security????
 
     /* МЕТОД РЕДАКТИРОВАНИЯ  ЗАЯВОК В СТАТУСЕ "ЧЕРНОВИК", СОЗДАННЫХ ПОЛЬЗОВАТЕЛЕМ*/
 
@@ -101,7 +105,7 @@ public class ItemController {
             @RequestParam(value = "userName", defaultValue = "Guest") String userName) {
         Item item = findById(id).getBody();
         assert item != null;
-        if (items.itemContains(item, Draft, userName)) {
+        if (items.itemContains(item, Status.Draft, userName)) {
             update(item);
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
@@ -112,23 +116,83 @@ public class ItemController {
 
     /*МЕТОДЫ OPERATOR-а:_______________________________________________________________________*/
 
-    // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ ПО ЧАСТИ ИМЕНИ , ID И ТД
+    //UserName должно вставляться из security????
 
     /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
  направления (как от самой старой к самой новой, так и наоборот) и пагинацией
- по 5 элементов, фильтрация по статусу*/
+ по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
+ Просматривать отправленные заявки только конкретного пользователя по его
+ имени/части имени (у пользователя, соответственно, должно быть поле name)*/
     @GetMapping("/sort/operator")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
-            @RequestParam(value = "userName", defaultValue = "Guest") String userName
+            @RequestParam(value = "userName", defaultValue = "") String userName
     ) {
+        if (userName != null) {
+            return findSortByConditionPageItemsIncludeUsers(0, 5,
+                    sortDirection == 0 ? "asc" : "desc",
+                    Status.Sent,
+                    persons.findUserByUsernameContains(userName));
+        }
         return findSortByConditionPageItems(0, 5,
                 sortDirection == 0 ? "asc" : "desc",
                 Status.Sent);
     }
 
+    /*МЕТОД : НАЙТИ ПО ID  ЗАЯВКУ*/
+    @PostMapping("/find/{id}")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Item> findItem(
+            @PathVariable int id) {
+        Item item = findById(id).getBody();
+        assert item != null;
+        if (items.itemContains(item, Status.Sent, null)) {
+            return new ResponseEntity<Item>(
+                    item,
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"отправлено\")!");
+    }
+
+    /*МЕТОД : ПРИНЯТЬ ЗАЯВКУ*/
+    @PostMapping("/accept/{id}")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Item> acceptItem(
+            @PathVariable int id) {
+        Item item = findById(id).getBody();
+        assert item != null;
+        if (items.itemContains(item, Status.Sent, null)) {
+            item.setStatus(Status.Accepted);
+            update(item);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"отправлено\")!");
+    }
+
+    /*МЕТОД : ОТКЛОНИТЬ ЗАЯВКУ*/
+    @PostMapping("/reject/{id}")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Item> rejectItem(
+            @PathVariable int id) {
+        Item item = findById(id).getBody();
+        assert item != null;
+        if (items.itemContains(item, Status.Sent, null)) {
+            item.setStatus(Status.Rejected);
+            update(item);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"отправлено\")!");
+    }
+
     /*МЕТОДЫ ADMIN-а:___________________________________________________________________________*/
+
+    //UserName должно вставляться из security????
 
     // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
 

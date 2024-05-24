@@ -105,6 +105,11 @@ public class UserServiceData implements UserService, UserDetailsService {
     }
 
     @Override
+    public List<User> findUserByUsernameContains(String username) {
+        return userRepository.findUserByUsernameContains(username);
+    }
+
+    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findUserByUsername(username).orElseThrow();
         if (user == null) {
