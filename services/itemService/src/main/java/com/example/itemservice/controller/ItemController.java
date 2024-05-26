@@ -1,6 +1,8 @@
 package com.example.itemservice.controller;
 
+import com.example.itemservice.domain.dto.UserDto;
 import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.domain.model.User;
 import com.example.itemservice.handlers.Operation;
@@ -116,8 +118,6 @@ public class ItemController {
 
     /*МЕТОДЫ OPERATOR-а:_______________________________________________________________________*/
 
-    //UserName должно вставляться из security????
-
     /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
  направления (как от самой старой к самой новой, так и наоборот) и пагинацией
  по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
@@ -192,10 +192,6 @@ public class ItemController {
 
     /*МЕТОДЫ ADMIN-а:___________________________________________________________________________*/
 
-    //UserName должно вставляться из security????
-
-    // СДЕЛАТЬ ДОП ФИЛЬТРАЦИЮ
-
     /*Просмотреть список заявок admin-a с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
@@ -214,8 +210,40 @@ public class ItemController {
         } else {
             inputStatus = Status.Rejected;
         }
+        if (userName != null) {
+            return findSortByConditionPageItemsIncludeUsers(0, 5,
+                    sortDirection == 0 ? "asc" : "desc",
+                    inputStatus,
+                    persons.findUserByUsernameContains(userName));
+        }
         return findSortByConditionPageItems(0, 5,
-                sortDirection == 0 ? "asc" : "desc", inputStatus);
+                sortDirection == 0 ? "asc" : "desc",
+                inputStatus);
+    }
+
+    /*смотреть список пользователей*/
+    @GetMapping("/findAllUsersList")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<User> findAllUsersList() {
+        return this.persons.findAll();
+    }
+
+    //ПЕРЕПРОВЕРИТЬ ????? USER DTO ???
+
+    /* назначать пользователям права оператора*/
+
+    @PostMapping("/setRoleOperator/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public /*ResponseEntity<Boolean>*/ boolean setRoleOperator(
+            @PathVariable int id) {
+        User user = persons.findById(id).get();
+        if (user.getRoles().contains(Role.ROLE_USER)
+                && !(user.getRoles().contains(Role.ROLE_OPERATOR))) {
+            List<Role> roles = user.getRoles();
+            roles.add(Role.ROLE_OPERATOR);
+            user.setRoles(roles);
+        }
+        return persons.update(user);
     }
 
     /*ОБЩИЕ МЕТОДЫ:___________________________________________________________________________________*/
