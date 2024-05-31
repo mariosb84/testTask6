@@ -1,5 +1,6 @@
 package com.example.itemservice.service;
 
+import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.User;
 import com.example.itemservice.domain.dto.UserDto;
 import com.example.itemservice.repository.UserRepository;
@@ -106,7 +107,20 @@ public class UserServiceData implements UserService, UserDetailsService {
 
     @Override
     public List<User> findUserByUsernameContains(String username) {
-        return userRepository.findUserByUsernameContains(username);
+        return userRepository.findAllUsersByUsername(username);
+    }
+
+    @Override
+    public Optional<User> setRoleOperator(long id) {
+        Optional<User> user = findById(id);
+        if (user.isPresent() && user.get().getRoles().contains(Role.ROLE_USER)
+                && !(user.get().getRoles().contains(Role.ROLE_OPERATOR))) {
+            List<Role> roles = user.get().getRoles();
+            roles.add(Role.ROLE_OPERATOR);
+            user.get().setRoles(roles);
+            return user;
+        }
+        return Optional.empty();
     }
 
     @Override

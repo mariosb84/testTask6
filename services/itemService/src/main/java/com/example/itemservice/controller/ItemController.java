@@ -30,6 +30,7 @@ import javax.validation.constraints.Min;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -118,11 +119,12 @@ public class ItemController {
 
     /*МЕТОДЫ OPERATOR-а:_______________________________________________________________________*/
 
-    /*Просмотреть список заявок operator-a с возможностью сортировки по дате создания в оба
- направления (как от самой старой к самой новой, так и наоборот) и пагинацией
- по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
- Просматривать отправленные заявки только конкретного пользователя по его
- имени/части имени (у пользователя, соответственно, должно быть поле name)*/
+    /*Просмотреть список всех отправленных на рассмотрение заявок с возможностью
+    сортировки по дате создания в оба
+    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+    по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
+    Просматривать отправленные заявки только конкретного пользователя по его
+    имени/части имени (у пользователя, соответственно, должно быть поле name)*/
     @GetMapping("/sort/operator")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
@@ -192,7 +194,7 @@ public class ItemController {
 
     /*МЕТОДЫ ADMIN-а:___________________________________________________________________________*/
 
-    /*Просмотреть список заявок admin-a с возможностью сортировки по дате создания в оба
+    /*Просмотреть список заявок в любом статусе с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
     @GetMapping("/sort/admin")
@@ -228,22 +230,19 @@ public class ItemController {
         return this.persons.findAll();
     }
 
-    //ПЕРЕПРОВЕРИТЬ ????? USER DTO ???
-
     /* назначать пользователям права оператора*/
 
     @PostMapping("/setRoleOperator/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public /*ResponseEntity<Boolean>*/ boolean setRoleOperator(
+    public ResponseEntity<Boolean> setRoleOperator(
             @PathVariable int id) {
-        User user = persons.findById(id).get();
-        if (user.getRoles().contains(Role.ROLE_USER)
-                && !(user.getRoles().contains(Role.ROLE_OPERATOR))) {
-            List<Role> roles = user.getRoles();
-            roles.add(Role.ROLE_OPERATOR);
-            user.setRoles(roles);
+        User user = persons.setRoleOperator(id).get();
+        if (persons.update(user)) {
+            return (ResponseEntity.ok().build());
         }
-        return persons.update(user);
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Роль оператора не назначена,"
+                + " пользователь не найден, Объект не обновлен!");
     }
 
     /*ОБЩИЕ МЕТОДЫ:___________________________________________________________________________________*/
