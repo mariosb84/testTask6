@@ -68,7 +68,7 @@ public class SecurityConfiguration {
                                 .permitAll()
                                 .and()
                                 .logout()
-                               // .logoutSuccessUrl("/login?logout=true")
+                                //.logoutSuccessUrl("/login?logout=true")
                                 .invalidateHttpSession(true)
                                 .permitAll();
                     } catch (Exception e) {

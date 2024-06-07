@@ -1,5 +1,6 @@
 package com.example.itemservice.service;
 
+import com.example.itemservice.domain.dto.ItemDto;
 import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.domain.model.User;
@@ -70,6 +71,14 @@ public class ItemServiceData implements ItemService {
         return userName != null ? statusEqual
                 && (item.getUsers().stream().map(User::getUsername).
                 anyMatch(s -> s.equals(userName))) : statusEqual;
+    }
+
+    @Override
+    public Item addItemDto(ItemDto itemDto) {
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        return item;
     }
 
 }

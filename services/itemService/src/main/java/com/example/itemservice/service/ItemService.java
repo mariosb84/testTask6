@@ -1,5 +1,6 @@
 package com.example.itemservice.service;
 
+import com.example.itemservice.domain.dto.ItemDto;
 import com.example.itemservice.domain.model.Item;
 import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.domain.model.User;
@@ -28,6 +29,8 @@ public interface ItemService {
     List<Item> findAllItemContainsUser(User user);
 
     boolean itemContains(Item item, Status status, String userName);
+
+    Item addItemDto(ItemDto itemDto);
 
 
 }

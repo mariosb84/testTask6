@@ -1,8 +1,7 @@
 package com.example.itemservice.controller;
 
-import com.example.itemservice.domain.dto.UserDto;
+import com.example.itemservice.domain.dto.ItemDto;
 import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.domain.model.User;
 import com.example.itemservice.handlers.Operation;
@@ -30,7 +29,6 @@ import javax.validation.constraints.Min;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -69,7 +67,9 @@ public class ItemController {
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Item> create(@Valid @RequestBody Item item) {
+    /*public ResponseEntity<Item> create(@Valid @RequestBody Item item) {*/
+        public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
+            Item item = items.addItemDto(itemDto);
         item.setStatus(Status.Draft);
         var result = this.items.add(item);
         return new ResponseEntity<Item>(
