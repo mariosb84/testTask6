@@ -7,6 +7,7 @@ import com.example.itemservice.domain.model.User;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.ItemService;
 import com.example.itemservice.service.UserService;
+import com.example.itemservice.service.UserServiceData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -70,9 +71,8 @@ public class ItemController {
     /*public ResponseEntity<Item> create(@Valid @RequestBody Item item) {*/
         public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
             Item item = items.addItemDto(itemDto);
-        item.setStatus(Status.Draft);
-        var result = this.items.add(item);
-        return new ResponseEntity<Item>(
+            var result = this.items.add(item);
+            return new ResponseEntity<Item>(
                 result.orElse(new Item()),
                 result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
         );
@@ -230,7 +230,8 @@ public class ItemController {
         return this.persons.findAll();
     }
 
-    /* назначать пользователям права оператора*/
+    /* назначать пользователям права о
+    свячператора*/
 
     @PostMapping("/setRoleOperator/{id}")
     @PreAuthorize("hasRole('ADMIN')")

@@ -13,13 +13,14 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.itemservice.domain.model.Status.Draft;
-
 @Service
 @AllArgsConstructor
 public class ItemServiceData implements ItemService {
 
     private final ItemRepository itemRepository;
+
+    private final UserServiceData personsData;
+
     @Override
     public List<Item> findAll() {
         return itemRepository.findAll();
@@ -78,6 +79,8 @@ public class ItemServiceData implements ItemService {
         Item item = new Item();
         item.setName(itemDto.getName());
         item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Draft);
+        item.setUsers(List.of(personsData.getCurrentUser()));
         return item;
     }
 
