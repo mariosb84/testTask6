@@ -58,20 +58,24 @@ public class SecurityConfiguration {
                                 .anyRequest().authenticated())*/
                                 .antMatchers("/auth/**").permitAll()
                                 .antMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
-                                .antMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
-                                .antMatchers("/item/*").hasRole("USER")
+                                //.antMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
+                                /*.antMatchers("/item/").hasRole("USER")*/
+                                /*.antMatchers("/item/**").hasRole("USER")*/
+                                .antMatchers("/item/**").permitAll()
+                                /*.antMatchers("/person/").hasRole("USER")*/
+                                .antMatchers("/person/**").permitAll()
                                 .anyRequest().authenticated()
-                                .and()
+                                //.and()
                                 //.formLogin()
                                 //.loginPage("/auth/login/")
                                 //.defaultSuccessUrl("/item/")
                                 //.failureUrl("/login?error=true")
                                 //.permitAll()
                                // .and()
-                                .logout()
+                                //.logout()
                                 //.logoutSuccessUrl("/login?logout=true")
-                                .invalidateHttpSession(true)
-                                .permitAll();
+                                //.invalidateHttpSession(true)
+                               /* .permitAll()*/;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }

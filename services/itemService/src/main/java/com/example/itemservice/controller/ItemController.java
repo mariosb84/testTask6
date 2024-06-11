@@ -52,7 +52,7 @@ public class ItemController {
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/sort/user")
+    @GetMapping("/sortItemsByUser")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<Item>> findSortPageItemsByUser(
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
@@ -65,9 +65,9 @@ public class ItemController {
     }
 
     /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
-    @PostMapping("/")
+    @PostMapping("/createItem")
     @Validated(Operation.OnCreate.class)
-    @PreAuthorize("hasRole('USER')")
+    /*@PreAuthorize("hasRole('USER')")*/
     /*public ResponseEntity<Item> create(@Valid @RequestBody Item item) {*/
         public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
             Item item = items.addItemDto(itemDto);
@@ -81,7 +81,7 @@ public class ItemController {
     //UserName должно вставляться из security????
 
     /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ*/
-    @PostMapping("/send/{id}")
+    @PostMapping("/sendItem/{id}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Item> sendItem(
             @PathVariable int id,
@@ -125,7 +125,7 @@ public class ItemController {
     по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
     Просматривать отправленные заявки только конкретного пользователя по его
     имени/части имени (у пользователя, соответственно, должно быть поле name)*/
-    @GetMapping("/sort/operator")
+    @GetMapping("/sortItemsByOperator")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
@@ -143,7 +143,7 @@ public class ItemController {
     }
 
     /*МЕТОД : НАЙТИ ПО ID  ЗАЯВКУ*/
-    @PostMapping("/find/{id}")
+    @PostMapping("/findItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> findItem(
             @PathVariable int id) {
@@ -161,7 +161,7 @@ public class ItemController {
     }
 
     /*МЕТОД : ПРИНЯТЬ ЗАЯВКУ*/
-    @PostMapping("/accept/{id}")
+    @PostMapping("/acceptItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> acceptItem(
             @PathVariable int id) {
@@ -177,7 +177,7 @@ public class ItemController {
     }
 
     /*МЕТОД : ОТКЛОНИТЬ ЗАЯВКУ*/
-    @PostMapping("/reject/{id}")
+    @PostMapping("/rejectItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> rejectItem(
             @PathVariable int id) {
@@ -197,7 +197,7 @@ public class ItemController {
     /*Просмотреть список заявок в любом статусе с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
-    @GetMapping("/sort/admin")
+    @GetMapping("/sortItemsByAdmin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
@@ -225,7 +225,7 @@ public class ItemController {
 
     /*смотреть список пользователей*/
     @GetMapping("/findAllUsersList")
-    @PreAuthorize("hasRole('ADMIN')")
+    /*@PreAuthorize("hasRole('ADMIN')")*/
     public List<User> findAllUsersList() {
         return this.persons.findAll();
     }
@@ -250,7 +250,7 @@ public class ItemController {
 
     /*НАЙТИ ВСЕ ЗАЯВКИ*/
     @GetMapping("/findAll")
-    @PreAuthorize("hasRole('USER') || hasRole('OPERATOR') || hasRole('ADMIN')")
+    /*@PreAuthorize("hasRole('USER') || hasRole('OPERATOR') || hasRole('ADMIN')")*/
     public List<Item> findAll() {
         return this.items.findAll();
     }
