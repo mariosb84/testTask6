@@ -77,10 +77,12 @@ public class ItemServiceData implements ItemService {
     @Override
     public Item addItemDto(ItemDto itemDto) {
         Item item = new Item();
-        item.setName(itemDto.getName());
-        item.setItemText(itemDto.getItemText());
-        item.setStatus(Status.Draft);
-        item.setUsers(List.of(personsData.getCurrentUser()));
+        if (itemDto != null) {
+            item.setName(itemDto.getName());
+            item.setItemText(itemDto.getItemText());
+        }
+            item.setStatus(Status.Draft);
+           /* item.setUsers(List.of(personsData.getCurrentUser()));*/
         return item;
     }
 

@@ -36,7 +36,7 @@ public class Item {
     @Column(name = "item_name")
         private String name;
     @Size(max = 200, message = "Item name must be  less 200")
-    @Column(name = "item_itemText")
+    @Column(name = "item_Text")
     private String itemText;
     @NotNull
     @Column(name = "item_created")
@@ -57,10 +57,10 @@ public class Item {
             return created;
         }
 
-        @Override
+      /*  @Override
         public String toString() {
             return String.format("id: %s, name: %s, created: %s",
                     id, name, FORMATTER.format(created));
-        }
+        }*/
 
 }
