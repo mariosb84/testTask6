@@ -4,6 +4,7 @@ import com.example.itemservice.domain.model.User;
 import com.example.itemservice.domain.dto.UserDto;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.UserService;
+import com.example.itemservice.service.UserServiceData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -28,6 +29,8 @@ import java.util.List;
 public class UserController {
 
     private final UserService persons;
+
+    private final UserServiceData personsData;
 
     private final BCryptPasswordEncoder encoder;
 
@@ -103,6 +106,11 @@ public class UserController {
             put("type", e.getClass());
         }}));
         LOGGER.error(e.getLocalizedMessage());
+    }
+
+    @GetMapping("/getCurrentUser")
+    public User getCurrentUser() {
+        return this.personsData.getCurrentUser();
     }
 
 }

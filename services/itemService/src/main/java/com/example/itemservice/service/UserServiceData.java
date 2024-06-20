@@ -152,8 +152,17 @@ public class UserServiceData implements UserService, UserDetailsService {
      */
     public User getCurrentUser() {
         /* Получение имени пользователя из контекста Spring Security*/
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        var username = authentication.getName();
+       /* Authentication authentication = SecurityContextHolder.getContext().getAuthentication();*/
+
+        String username;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+             username = ((UserDetails) principal).getUsername();
+        } else {
+             username = principal.toString();
+        }
+
+       /* var username = authentication.getName();*/
         return findUserByUsername(username);
     }
 
