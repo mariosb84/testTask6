@@ -82,8 +82,7 @@ public class ItemServiceData implements ItemService {
             item.setItemText(itemDto.getItemText());
         }
             item.setStatus(Status.Draft);
-            item.setUsers(List.of(personsData.getCurrentUser()));
-        /*item.setUsers(List.of(personsData.findUserByUsername("User_11")));*/
+        item.setUsers(List.of(personsData.getCurrentUser()));
         return item;
     }
 

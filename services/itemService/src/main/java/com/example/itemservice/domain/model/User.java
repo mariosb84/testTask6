@@ -24,6 +24,7 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
+@NamedEntityGraph(name = "user_entity-graph", attributeNodes = @NamedAttributeNode("roles"))
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,7 +59,8 @@ public class User implements UserDetails {
     @Column(name = "role")
     @NonNull
     @Enumerated(EnumType.STRING)
-    @ElementCollection
+   /* @ElementCollection(fetch = FetchType.EAGER) - делаем через @EntityGraph */
+    @ElementCollection()
     private List<Role> roles;
 
 
@@ -72,7 +74,7 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        return null;
+        return username;
     }
 
     @Override

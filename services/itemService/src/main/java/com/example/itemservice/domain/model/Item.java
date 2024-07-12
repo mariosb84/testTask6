@@ -19,6 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @Setter
 @Getter
+@NamedEntityGraph(name = "item_entity-graph", attributeNodes = @NamedAttributeNode("users"))
 public class Item {
 
         private static final DateTimeFormatter FORMATTER =

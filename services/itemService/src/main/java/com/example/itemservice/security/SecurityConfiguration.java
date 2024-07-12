@@ -62,8 +62,8 @@ public class SecurityConfiguration {
                                 /*.antMatchers("/item/").hasRole("USER")*/
                                 /*.antMatchers("/item/**").hasRole("USER")*/
                                 .antMatchers("/item/**").permitAll()
-                                /*.antMatchers("/person/").hasRole("USER")*/
-                                .antMatchers("/person/**").permitAll()
+                                .antMatchers("/person/").hasRole("USER")
+                                /*.antMatchers("/person/**").permitAll()*/
                                 .anyRequest().authenticated()
                                 //.and()
                                 //.formLogin()

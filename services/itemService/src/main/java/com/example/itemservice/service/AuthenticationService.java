@@ -3,6 +3,7 @@ package com.example.itemservice.service;
 import com.example.itemservice.domain.dto.JwtAuthenticationResponse;
 import com.example.itemservice.domain.dto.SignInRequest;
 import com.example.itemservice.domain.dto.SignUpRequest;
+import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -35,7 +36,7 @@ public class AuthenticationService {
                 .password(passwordEncoder.encode(request.getPassword()))
                 .email(request.getEmail())
                 .phone(request.getPhone())
-                .roles(List.of(ROLE_USER))
+                .roles(List.of(Role.ROLE_USER))
                 .build();
 
        /* var user = new User(request.getUsername(), request.getEmail(), );*/

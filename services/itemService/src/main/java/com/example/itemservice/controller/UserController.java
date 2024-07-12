@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -109,8 +110,17 @@ public class UserController {
     }
 
     @GetMapping("/getCurrentUser")
-    public User getCurrentUser() {
-        return this.personsData.getCurrentUser();
+    public ResponseEntity<User> getCurrentUser(@CurrentSecurityContext(expression = "authentication?.name")
+                                                   String username) {
+        var person = personsData.findUserByUsername(username);
+        /*var person = personsData.getCurrentUser();*/
+        if (person != null) {
+            return new ResponseEntity<>(
+                    person,
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
     }
 
 }
