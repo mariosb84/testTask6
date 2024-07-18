@@ -108,7 +108,7 @@ public class UserServiceData implements UserService, UserDetailsService {
 
     @Override
     public List<User> findUserByUsernameContains(String username) {
-        return userRepository.findAllUsersByUsername(username);
+        return userRepository.findAllUsersByUsernameContaining(username);
     }
 
     @Override

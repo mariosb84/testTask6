@@ -123,4 +123,16 @@ public class UserController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
     }
 
+    @GetMapping("/findByUserName")
+    public ResponseEntity<List<User>> findUsersByUsernameContains(@RequestParam(value = "userName") String userName) {
+        var personsList = this.persons.findUserByUsernameContains(userName);
+        if (!personsList.isEmpty()) {
+            return new ResponseEntity<>(
+                    personsList,
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
+    }
+
 }

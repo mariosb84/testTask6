@@ -13,17 +13,17 @@ import java.util.List;
 
 public interface ItemRepository extends CrudRepository<Item, Integer> {
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, value = "item_entity-graph")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
     @NonNull
     List<Item> findAll();
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, value = "item_entity-graph")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
     Page<Item> findAllItemsByStatusAndUsersIn(Pageable pageable, Status status, List<User> users);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, value = "item_entity-graph")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
     Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, value = "item_entity-graph")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
     List<Item> findAllItemsByUsersIn(List<User> users);
 
 }

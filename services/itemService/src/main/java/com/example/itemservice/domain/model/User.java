@@ -17,6 +17,16 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+
+/*@NamedEntityGraphs({
+        @NamedEntityGraph(
+                name = "user-entity-graph",
+                attributeNodes = {
+                        @NamedAttributeNode(value = "roles")
+                }
+        )
+})*/
+
 @Entity
 @Table(name = "person")
 @AllArgsConstructor
@@ -24,7 +34,7 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
-@NamedEntityGraph(name = "user_entity-graph", attributeNodes = @NamedAttributeNode("roles"))
+/*@NamedEntityGraph(name = "user_entity-graph", attributeNodes = @NamedAttributeNode("roles"))*/
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,10 +69,9 @@ public class User implements UserDetails {
     @Column(name = "role")
     @NonNull
     @Enumerated(EnumType.STRING)
-   /* @ElementCollection(fetch = FetchType.EAGER) - делаем через @EntityGraph */
-    @ElementCollection()
+    /*@ElementCollection()*/
+    @ElementCollection(fetch = FetchType.EAGER) /*- делаем через @EntityGraph в методах репозитория*/
     private List<Role> roles;
-
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

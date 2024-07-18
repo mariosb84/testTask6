@@ -24,7 +24,7 @@ public interface UserService {
 
     User findUserByUsername(String username);
 
-    public User save(User user);
+    User save(User user);
 
     List<User> findUserByUsernameContains(String username);
 
