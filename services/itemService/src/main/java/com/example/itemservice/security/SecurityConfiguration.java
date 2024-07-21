@@ -2,7 +2,6 @@ package com.example.itemservice.security;
 
 import com.example.itemservice.filter.JwtAuthenticationFilter;
 import com.example.itemservice.service.UserServiceData;
-import com.example.itemservice.service.UserServiceNew;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

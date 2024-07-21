@@ -26,13 +26,10 @@ import java.util.Optional;
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
     Optional<User> findUserByUsername(String username);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
     boolean existsByUsername(String username);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
     boolean existsByEmail(String email);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,  attributePaths = "roles")
     boolean existsByPhone(String phone);
 
 }

@@ -5,8 +5,6 @@ import com.example.itemservice.domain.model.User;
 import com.example.itemservice.domain.dto.UserDto;
 import com.example.itemservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -47,9 +45,11 @@ public class UserServiceData implements UserService, UserDetailsService {
             /* Заменить на свои исключения*/
             throw new RuntimeException("Пользователь с таким именем уже существует");
         }
-
         if (userRepository.existsByEmail(user.getEmail())) {
             throw new RuntimeException("Пользователь с таким email уже существует");
+        }
+        if (userRepository.existsByPhone(user.getPhone())) {
+            throw new RuntimeException("Пользователь с таким номером телефона уже существует");
         }
         user.setRoles(List.of(ROLE_USER));
         return Optional.ofNullable(save(user));

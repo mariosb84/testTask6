@@ -7,7 +7,6 @@ import com.example.itemservice.domain.model.User;
 import com.example.itemservice.handlers.Operation;
 import com.example.itemservice.service.ItemService;
 import com.example.itemservice.service.UserService;
-import com.example.itemservice.service.UserServiceData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;

@@ -13,8 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.example.itemservice.domain.model.Role.ROLE_USER;
-
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {

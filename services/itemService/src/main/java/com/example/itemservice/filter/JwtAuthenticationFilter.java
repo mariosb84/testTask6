@@ -2,7 +2,6 @@ package com.example.itemservice.filter;
 
 import com.example.itemservice.service.JwtService;
 import com.example.itemservice.service.UserServiceData;
-import com.example.itemservice.service.UserServiceNew;
 import liquibase.util.StringUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
