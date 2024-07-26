@@ -33,10 +33,10 @@ public class Item {
             Operation.OnUpdate.class, Operation.OnDelete.class
     })
         private int id;
-    @Size(min = 3, max = 8, message = "Item name must be more than 0 and less 20")
+    @Size(min = 5, max = 50, message = "Item name must be more than 5 and less 50")
     @Column(name = "item_name")
         private String name;
-    @Size(max = 200, message = "Item name must be  less 200")
+    @Size(min = 8, max = 255, message = "Item text must be more than 8 less 255")
     @Column(name = "item_Text")
     private String itemText;
     @NotNull

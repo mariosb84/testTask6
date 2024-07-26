@@ -60,8 +60,8 @@ public class SecurityConfiguration {
                                 //.antMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
                                 /*.antMatchers("/item/").hasRole("USER")*/
                                 /*.antMatchers("/item/**").hasRole("USER")*/
-                                .antMatchers("/item/**").permitAll()
-                                .antMatchers("/person/").hasRole("USER")
+                                //.antMatchers("/item/**").permitAll()
+                                //.antMatchers("/person/").hasRole("USER")
                                 /*.antMatchers("/person/**").permitAll()*/
                                 .anyRequest().authenticated()
                                 //.and()

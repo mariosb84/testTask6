@@ -150,6 +150,7 @@ public class UserServiceData implements UserService, UserDetailsService {
      *
      * @return текущий пользователь
      */
+    @Override
     public User getCurrentUser() {
         /* Получение имени пользователя из контекста Spring Security*/
         return findUserByUsername(SecurityContextHolder.

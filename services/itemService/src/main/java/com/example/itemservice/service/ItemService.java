@@ -32,5 +32,7 @@ public interface ItemService {
 
     Item addItemDto(ItemDto itemDto);
 
+    Optional<Item> editItemDto(ItemDto itemDto, int id);
+
 
 }

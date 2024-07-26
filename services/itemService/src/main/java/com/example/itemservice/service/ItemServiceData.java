@@ -29,9 +29,6 @@ public class ItemServiceData implements ItemService {
     @Override
     public Optional<Item> add(Item item) {
         Item result = itemRepository.save(item);
-        if (Optional.of(result).isEmpty()) {
-            return Optional.empty();
-        }
         return Optional.of(result);
     }
 
@@ -84,6 +81,17 @@ public class ItemServiceData implements ItemService {
             item.setStatus(Status.Draft);
         item.setUsers(List.of(personsData.getCurrentUser()));
         return item;
+    }
+
+    @Override
+    public Optional<Item> editItemDto(ItemDto itemDto, int id) {
+        Optional<Item> item = itemRepository.findById(id);
+        if (item.isPresent()) {
+            item.get().setName(itemDto.getName());
+            item.get().setItemText(itemDto.getItemText());
+            return item;
+        }
+        return Optional.empty();
     }
 
 }

@@ -43,78 +43,72 @@ public class ItemController {
 
     private final ObjectMapper objectMapper;
 
-
     /*МЕТОДЫ USER-а:_______________________________________________________________________________*/
-
-    //UserName должно вставляться из security????
 
     /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
-   по 5 элементов, фильтрация по статусу*/
+   по 5 элементов, фильтрация по статусу ("hasRole('USER')")*/
     @GetMapping("/sortItemsByUser")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<Item>> findSortPageItemsByUser(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
-            @RequestParam(value = "userName", defaultValue = "Guest") String userName
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection
     ) {
+        User currentUser = persons.getCurrentUser();
         return findSortByConditionPageItemsIncludeUsers(0, 5,
                 sortDirection == 0 ? "asc" : "desc",
                 Status.Draft,
-                List.of(persons.findUserByUsername(userName)));
+                List.of(persons.findUserByUsername(currentUser.getUsername())));
     }
 
     /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
     @PostMapping("/createItem")
     @Validated(Operation.OnCreate.class)
-    /*@PreAuthorize("hasRole('USER')")*/
-    /*public ResponseEntity<Item> create(@Valid @RequestBody Item item) {*/
+    @PreAuthorize("hasRole('USER')")
         public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
             Item item = items.addItemDto(itemDto);
             var result = this.items.add(item);
-            return new ResponseEntity<Item>(
-                result.orElse(new Item()),
-                result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
-        );
+            return new ResponseEntity<>(
+                    result.orElse(new Item()),
+                    result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
+            );
     }
 
-    //UserName должно вставляться из security????
-
-    /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ*/
-    @PostMapping("/sendItem/{id}")
+    /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ ("hasRole('USER')")*/
+    @PutMapping("/sendItem/{id}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Item> sendItem(
-            @PathVariable int id,
-            @RequestParam(value = "userName", defaultValue = "Guest") String userName) {
-        Item item = findById(id).getBody();
-        assert item != null;
-        if (items.itemContains(item, Status.Draft, userName)) {
-            item.setStatus(Status.Sent);
-            update(item);
+    public ResponseEntity<Item> sendItem(@PathVariable int id) {
+        Item item = items.findById(id).get();
+        User currentUser = persons.getCurrentUser();
+        if (items.itemContains(item, Status.Draft, currentUser.getUsername())) {
+                item.setStatus(Status.Sent);
+                if (items.update(item)) {
+                    return   ResponseEntity.ok().build();
+                }
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Статус заявки не изменен("
                 + "возможно - неверный статус заявки"
                 + "(не \"черновик\")/либо заявка создана другим пользователем)!");
     }
 
-    //UserName должно вставляться из security????
+    /* МЕТОД РЕДАКТИРОВАНИЯ  ЗАЯВОК В СТАТУСЕ "ЧЕРНОВИК", СОЗДАННЫХ ПОЛЬЗОВАТЕЛЕМ ("hasRole('USER')")*/
 
-    /* МЕТОД РЕДАКТИРОВАНИЯ  ЗАЯВОК В СТАТУСЕ "ЧЕРНОВИК", СОЗДАННЫХ ПОЛЬЗОВАТЕЛЕМ*/
-
-    @PostMapping("/editUserItem/{id}")
+    @PutMapping("/editUserItem/{id}")
+    @Validated(Operation.OnUpdate.class)
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Item> editUserItem(
-            @PathVariable int id,
-            @RequestParam(value = "userName", defaultValue = "Guest") String userName) {
-        Item item = findById(id).getBody();
-        assert item != null;
-        if (items.itemContains(item, Status.Draft, userName)) {
-            update(item);
+            @PathVariable int id, @Valid @RequestBody ItemDto itemDto) {
+        Item item = items.findById(id).get();
+        User currentUser = persons.getCurrentUser();
+        if (items.itemContains(item, Status.Draft, currentUser.getUsername())) {
+            item = items.editItemDto(itemDto, id).get();
+                if (items.update(item)) {
+                    return   ResponseEntity.ok().build();
+                }
         }
-        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не обновлена("
                 + "возможно - неверный статус заявки"
                 + "(не \"черновик\")/либо заявка создана другим пользователем)!");
     }
-
 
     /*МЕТОДЫ OPERATOR-а:_______________________________________________________________________*/
 

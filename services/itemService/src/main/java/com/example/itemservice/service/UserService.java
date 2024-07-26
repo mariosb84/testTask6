@@ -29,4 +29,6 @@ public interface UserService {
     List<User> findUserByUsernameContains(String username);
 
     Optional<User> setRoleOperator(long id);
+
+    User getCurrentUser();
 }

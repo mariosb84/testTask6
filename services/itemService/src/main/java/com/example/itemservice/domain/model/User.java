@@ -47,7 +47,7 @@ public class User implements UserDetails {
     @NotNull(message = "UserName must be non null", groups = {
             Operation.OnCreate.class
     })
-    @Size(min = 5, max = 50, message = "UserName must be more than 8 and less 50")
+    @Size(min = 5, max = 50, message = "UserName must be more than 5 and less 50")
     @Column(name = "person_login")
     private String username;
     @Size(min = 8, max = 255, message = "Password must be more than 8 and less 255")
