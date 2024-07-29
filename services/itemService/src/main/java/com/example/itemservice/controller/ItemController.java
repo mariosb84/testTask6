@@ -136,14 +136,13 @@ public class ItemController {
     }
 
     /*МЕТОД : НАЙТИ ПО ID  ЗАЯВКУ*/
-    @PostMapping("/findItem/{id}")
+    @GetMapping("/findItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> findItem(
             @PathVariable int id) {
-        Item item = findById(id).getBody();
-        assert item != null;
+        Item item = items.findById(id).get();
         if (items.itemContains(item, Status.Sent, null)) {
-            return new ResponseEntity<Item>(
+            return new ResponseEntity<>(
                     item,
                     HttpStatus.OK
             );
@@ -154,15 +153,16 @@ public class ItemController {
     }
 
     /*МЕТОД : ПРИНЯТЬ ЗАЯВКУ*/
-    @PostMapping("/acceptItem/{id}")
+    @PutMapping("/acceptItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> acceptItem(
             @PathVariable int id) {
-        Item item = findById(id).getBody();
-        assert item != null;
+        Item item = items.findById(id).get();
         if (items.itemContains(item, Status.Sent, null)) {
             item.setStatus(Status.Accepted);
-            update(item);
+            if (items.update(item)) {
+                return   ResponseEntity.ok().build();
+            }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
                 + "возможно - неверный статус заявки"
@@ -170,15 +170,16 @@ public class ItemController {
     }
 
     /*МЕТОД : ОТКЛОНИТЬ ЗАЯВКУ*/
-    @PostMapping("/rejectItem/{id}")
+    @PutMapping("/rejectItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> rejectItem(
             @PathVariable int id) {
-        Item item = findById(id).getBody();
-        assert item != null;
+        Item item = items.findById(id).get();
         if (items.itemContains(item, Status.Sent, null)) {
             item.setStatus(Status.Rejected);
-            update(item);
+            if (items.update(item)) {
+                return   ResponseEntity.ok().build();
+            }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
                 + "возможно - неверный статус заявки"
@@ -195,7 +196,7 @@ public class ItemController {
     public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
             @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
             @RequestParam(value = "status", defaultValue = "0")@Min(0) @Max(2) Integer status,
-            @RequestParam(value = "userName", defaultValue = "Guest") String userName
+            @RequestParam(value = "userName", defaultValue = "") String userName
     ) {
         Status inputStatus;
         if (status == 0) {
@@ -218,15 +219,14 @@ public class ItemController {
 
     /*смотреть список пользователей*/
     @GetMapping("/findAllUsersList")
-    /*@PreAuthorize("hasRole('ADMIN')")*/
+    @PreAuthorize("hasRole('ADMIN')")
     public List<User> findAllUsersList() {
         return this.persons.findAll();
     }
 
-    /* назначать пользователям права о
-    свячператора*/
+    /* назначать пользователям права оператора*/
 
-    @PostMapping("/setRoleOperator/{id}")
+    @PutMapping("/setRoleOperator/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Boolean> setRoleOperator(
             @PathVariable int id) {
@@ -243,7 +243,6 @@ public class ItemController {
 
     /*НАЙТИ ВСЕ ЗАЯВКИ*/
     @GetMapping("/findAll")
-    /*@PreAuthorize("hasRole('USER') || hasRole('OPERATOR') || hasRole('ADMIN')")*/
     public List<Item> findAll() {
         return this.items.findAll();
     }
@@ -253,7 +252,7 @@ public class ItemController {
     public ResponseEntity<Item> findById(@PathVariable int id) {
         var item = this.items.findById(id);
         if (item.isPresent()) {
-            return new ResponseEntity<Item>(
+            return new ResponseEntity<>(
                     item.orElse(new Item()),
                     HttpStatus.OK
             );
