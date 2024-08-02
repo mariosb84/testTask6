@@ -5,6 +5,7 @@ import com.example.itemservice.domain.dto.SignInRequest;
 import com.example.itemservice.domain.dto.SignUpRequest;
 import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.User;
+import com.example.itemservice.repository.TokenBlackListRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +21,7 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private TokenBlackListRepository tokenBlackListRepository;
 
     /**
      * Регистрация пользователя
@@ -63,6 +65,10 @@ public class AuthenticationService {
 
         var jwt = jwtService.generateToken(user);
         return new JwtAuthenticationResponse(jwt);
+    }
+
+    public void logout(JwtAuthenticationResponse jwtAuthenticationResponse) {
+        tokenBlackListRepository.save(jwtAuthenticationResponse);
     }
 
 }

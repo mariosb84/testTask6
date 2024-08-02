@@ -2,6 +2,7 @@ package com.example.itemservice.service;
 
 
 import com.example.itemservice.domain.model.User;
+import com.example.itemservice.repository.TokenBlackListRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -21,6 +22,8 @@ import java.util.function.Function;
 public class JwtService {
     @Value("${token.signing.key}")
     private String jwtSigningKey;
+
+    private TokenBlackListRepository tokenBlackListRepository;
 
     /**
      * Извлечение имени пользователя из токена
@@ -57,7 +60,10 @@ public class JwtService {
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        /*return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);*/
+        /*ДОБАВЛЯЕМ ПРОВЕРКУ ТОКЕНА НА ЕГО ПРИСУТСТВИЕ В ЧЕРНОМ СПИСКЕ*/
+        return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token)
+                && tokenBlackListRepository.findAll().contains(token);
     }
 
     /**

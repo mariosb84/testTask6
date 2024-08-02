@@ -44,37 +44,21 @@ public class SecurityConfiguration {
                     corsConfiguration.setAllowCredentials(true);
                     return corsConfiguration;
                 }))
+
                 /* Настройка доступа к конечным точкам*/
 
                 .authorizeHttpRequests(request -> {
                     try {
                         request
                                 /* Можно указать конкретный путь, * - 1 уровень вложенности, ** - любое количество уровней вложенности*/
-
-                                /*.requestMatchers("/auth/**").permitAll()
-                                .requestMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
-                                .requestMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
-                                .anyRequest().authenticated())*/
                                 .antMatchers("/auth/**").permitAll()
-                                .antMatchers("/swagger-ui/**", "/swagger-resources/*", "/v3/api-docs/**").permitAll()
-                                //.antMatchers("/endpoint", "/admin/**").hasRole("ADMIN")
-                                /*.antMatchers("/item/").hasRole("USER")*/
-                                /*.antMatchers("/item/**").hasRole("USER")*/
-                                //.antMatchers("/item/**").permitAll()
-                                //.antMatchers("/person/").hasRole("USER")
-                                /*.antMatchers("/person/**").permitAll()*/
                                 .anyRequest().authenticated()
-                                //.and()
-                                //.formLogin()
-                                //.loginPage("/auth/login/")
-                                //.defaultSuccessUrl("/item/")
-                                //.failureUrl("/login?error=true")
-                                //.permitAll()
-                               // .and()
-                                //.logout()
-                                //.logoutSuccessUrl("/login?logout=true")
-                                //.invalidateHttpSession(true)
-                               /* .permitAll()*/;
+                                .and()
+                                .logout()
+                                .logoutUrl("/auth/auth_logout")
+                                .invalidateHttpSession(true)
+                                .deleteCookies("JSESSIONID")
+                                .permitAll();
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
