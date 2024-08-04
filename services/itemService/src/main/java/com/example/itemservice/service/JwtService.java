@@ -2,12 +2,13 @@ package com.example.itemservice.service;
 
 
 import com.example.itemservice.domain.model.User;
-import com.example.itemservice.repository.TokenBlackListRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,12 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Service
+@AllArgsConstructor
+@NoArgsConstructor
 public class JwtService {
+
     @Value("${token.signing.key}")
     private String jwtSigningKey;
-
-    private TokenBlackListRepository tokenBlackListRepository;
 
     /**
      * Извлечение имени пользователя из токена
@@ -60,10 +62,7 @@ public class JwtService {
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String userName = extractUserName(token);
-        /*return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token);*/
-        /*ДОБАВЛЯЕМ ПРОВЕРКУ ТОКЕНА НА ЕГО ПРИСУТСТВИЕ В ЧЕРНОМ СПИСКЕ*/
-        return (userName.equals(userDetails.getUsername())) && !isTokenExpired(token)
-                && tokenBlackListRepository.findAll().contains(token);
+        return ((userName.equals(userDetails.getUsername())) && (!isTokenExpired(token)));
     }
 
     /**
