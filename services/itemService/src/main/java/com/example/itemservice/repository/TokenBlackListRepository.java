@@ -1,7 +1,7 @@
 package com.example.itemservice.repository;
 
 
-import com.example.itemservice.domain.dto.JwtAuthenticationResponse;
+import com.example.itemservice.domain.model.JwtAuthenticationResponse;
 import lombok.NonNull;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;

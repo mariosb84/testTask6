@@ -1,4 +1,4 @@
-package com.example.itemservice.domain.dto;
+package com.example.itemservice.domain.model;
 
 import lombok.*;
 

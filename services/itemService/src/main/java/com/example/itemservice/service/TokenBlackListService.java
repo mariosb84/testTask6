@@ -1,6 +1,6 @@
 package com.example.itemservice.service;
 
-import com.example.itemservice.domain.dto.JwtAuthenticationResponse;
+import com.example.itemservice.domain.model.JwtAuthenticationResponse;
 
 import java.util.List;
 import java.util.Optional;
