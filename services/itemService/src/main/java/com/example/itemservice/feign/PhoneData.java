@@ -6,7 +6,6 @@ import javax.validation.constraints.Size;
 
 @Data
 public class PhoneData {
-
     /*Исходный телефон одной строкой*/
     @Size(max = 100)
     private String source;
@@ -45,7 +44,7 @@ public class PhoneData {
      иностранных телефонов.
      Если у страны несколько поясов, вернёт
      минимальный и максимальный через слеш:
-     UTC+5/UTC+6*//*
+     UTC+5/UTC+6*/
     @Size(max = 50)
     private String timezone;
    /* Признак конфликта телефона с адресом*/

@@ -78,9 +78,7 @@ public class UserController {
 
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
-   /* public ResponseEntity<Boolean> update(@RequestBody Person person) {*/
      public ResponseEntity<Boolean> update(@Valid @RequestBody UserDto person) {
-        /*if ((this.persons.update(person))) { */
            if ((this.persons.updatePatch(person))) {
             return ResponseEntity.ok().build();
         }
@@ -113,7 +111,6 @@ public class UserController {
     public ResponseEntity<User> getCurrentUser(@CurrentSecurityContext(expression = "authentication?.name")
                                                    String username) {
         var person = personsData.findUserByUsername(username);
-        /*var person = personsData.getCurrentUser();*/
         if (person != null) {
             return new ResponseEntity<>(
                     person,

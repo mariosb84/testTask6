@@ -27,6 +27,7 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfiguration {
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserServiceData userService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;

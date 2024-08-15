@@ -18,15 +18,6 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 
-/*@NamedEntityGraphs({
-        @NamedEntityGraph(
-                name = "user-entity-graph",
-                attributeNodes = {
-                        @NamedAttributeNode(value = "roles")
-                }
-        )
-})*/
-
 @Entity
 @Table(name = "person")
 @AllArgsConstructor
@@ -34,7 +25,6 @@ import java.util.List;
 @Setter
 @Getter
 @Builder
-/*@NamedEntityGraph(name = "user_entity-graph", attributeNodes = @NamedAttributeNode("roles"))*/
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -69,8 +59,8 @@ public class User implements UserDetails {
     @Column(name = "role")
     @NonNull
     @Enumerated(EnumType.STRING)
-    /*@ElementCollection()*/
-    @ElementCollection(fetch = FetchType.EAGER) /*- делаем через @EntityGraph в методах репозитория*/
+    /*- делаем через @EntityGraph в методах репозитория*/
+    @ElementCollection(fetch = FetchType.EAGER)
     private List<Role> roles;
 
     @Override

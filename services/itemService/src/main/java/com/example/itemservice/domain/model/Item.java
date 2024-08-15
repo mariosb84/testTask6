@@ -19,7 +19,6 @@ import java.util.List;
 @NoArgsConstructor
 @Setter
 @Getter
-/*@NamedEntityGraph(name = "item_entity-graph", attributeNodes = @NamedAttributeNode("users"))*/
 public class Item {
 
         private static final DateTimeFormatter FORMATTER =
@@ -57,11 +56,5 @@ public class Item {
         public LocalDateTime getTime() {
             return created;
         }
-
-      /*  @Override
-        public String toString() {
-            return String.format("id: %s, name: %s, created: %s",
-                    id, name, FORMATTER.format(created));
-        }*/
 
 }

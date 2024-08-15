@@ -31,4 +31,5 @@ public interface UserService {
     Optional<User> setRoleOperator(long id);
 
     User getCurrentUser();
+
 }

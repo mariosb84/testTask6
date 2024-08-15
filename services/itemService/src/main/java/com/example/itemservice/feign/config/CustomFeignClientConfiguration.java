@@ -4,18 +4,21 @@ import com.example.itemservice.feign.FeignCustomErrorDecoder;
 import feign.Logger;
 import feign.RequestInterceptor;
 import feign.codec.ErrorDecoder;
-import feign.form.spring.SpringFormEncoder;
 import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
 import org.springframework.cloud.openfeign.support.SpringEncoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-
 @Configuration
 public class CustomFeignClientConfiguration {
 
+    @Value("${app.aPiDaDataToken}")
+    private String aPiDaDataToken;
 
+    @Value("${app.aPiDaDataSecret}")
+    private String aPiDaDataSecret;
 
     @Bean
     Logger.Level feignLoggerLevel() {
@@ -25,16 +28,16 @@ public class CustomFeignClientConfiguration {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return requestTemplate -> {
-            requestTemplate.header("Authorization", "Token f18af8810c2fa9ac5e9d8ce4fac62e6292b9a80d");
-            requestTemplate.header("X-Secret", "848851c968a751c00bd01c8eed32a2830dd8a138");
+            requestTemplate.header("Authorization", aPiDaDataToken);
+            requestTemplate.header("X-Secret", aPiDaDataSecret);
             requestTemplate.header("Content-Type", "application/json");
             requestTemplate.header("Accept", "application/json");
         };
     }
 
     @Bean
-    public SpringFormEncoder encoder(ObjectFactory<HttpMessageConverters> converters) {
-        return new SpringFormEncoder(new SpringEncoder(converters));
+    public SpringEncoder encoder(ObjectFactory<HttpMessageConverters> converters) {
+        return new SpringEncoder(converters);
     }
 
     @Bean

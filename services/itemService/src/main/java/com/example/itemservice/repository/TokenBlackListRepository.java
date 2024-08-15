@@ -17,6 +17,4 @@ public interface TokenBlackListRepository extends CrudRepository<JwtAuthenticati
 
     Optional<JwtAuthenticationResponse> findByToken(String token);
 
-
-
 }
