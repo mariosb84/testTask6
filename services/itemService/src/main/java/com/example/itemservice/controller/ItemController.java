@@ -286,7 +286,7 @@ public class ItemController {
     Просмотреть список заявок с возможностью сортировки по дате создания в оба
     направления (как от самой старой к самой новой, так и наоборот) и пагинацией
     по 5 элементов, фильтрация по статусу*/
-    private  ResponseEntity<Page<Item>> findSortByConditionPageItemsIncludeUsers(
+    public ResponseEntity<Page<Item>> findSortByConditionPageItemsIncludeUsers(
             @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
             @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
             String direction,
@@ -306,7 +306,7 @@ public class ItemController {
    Просмотреть список заявок с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
-    private  ResponseEntity<Page<Item>> findSortByConditionPageItems(
+    public ResponseEntity<Page<Item>> findSortByConditionPageItems(
             @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
             @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
             String direction,

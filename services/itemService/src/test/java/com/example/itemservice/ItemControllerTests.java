@@ -16,16 +16,24 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import org.springframework.security.test.context.support.WithMockUser;
+
+import static com.example.itemservice.domain.model.Role.ROLE_USER;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -37,7 +45,7 @@ public class ItemControllerTests {
     private ItemService itemService;
 
     @Mock
-    private UserService userService;
+    private UserService persons;
 
     @InjectMocks
     private ItemController itemController;
@@ -49,6 +57,68 @@ public class ItemControllerTests {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(itemController).build();
     }
+
+    /*ТЕСТЫ НА МЕТОДЫ USER-а:_______________________________________________________________________________*/
+
+
+    @Test
+    @WithMockUser(roles = "ROLE_USER") /* Эмулируем пользователя с ролью USER*/
+    public void testFindSortPageItemsByUser_Asc() throws Exception {
+        /* Создаем объект пользователя*/
+        User currentUser = new User(1, "testUser",
+                "password", "testUser@mail.ru",
+                "89212222222", List.of(ROLE_USER));
+        when(persons.getCurrentUser()).thenReturn(currentUser);
+        /* Замените на ваши данные, которые вы ожидаете в ответе*/
+        Page<Item> page = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 5), 0); /* Пустая страница*/
+        when(itemController.findSortByConditionPageItemsIncludeUsers(any(), any(), any(), any(), any()))
+                .thenReturn(page);
+
+        mockMvc.perform(get("/sortItemsByUser?sortDirection=0")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect((ResultMatcher) content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect((ResultMatcher) jsonPath("$.content").isArray())
+                .andExpect((ResultMatcher) jsonPath("$.content").isEmpty());
+
+        /* Проверяем, что метод был вызван*/
+        verify(persons).getCurrentUser();
+    }
+
+    @Test
+    public void testFindSortPageItemsByUser_Asc2() throws Exception {
+        /*Настройка мока*/
+        User currentUser = new User(1, "testUser",
+                "password", "testUser@mail.ru",
+                "89212222222", List.of(ROLE_USER));
+        when(persons.getCurrentUser()).thenReturn(currentUser);
+        /*Добавьте здесь настройку для findSortByConditionPageItemsIncludeUsers*/
+
+        /* Выполнение запроса*/
+        mockMvc.perform(get("/sortItemsByUser?sortDirection=0"))
+                .andExpect(status().isOk())
+                .andExpect((ResultMatcher) content().contentType(MediaType.APPLICATION_JSON))
+        /* Добавьте здесь дополнительные проверки содержимого ответа*/
+        ;
+    }
+
+    @Test
+    public void testFindSortPageItemsByUser_Desc() throws Exception {
+        /*Настройка мока*/
+        User currentUser = new User(1, "testUser",
+                "password", "testUser@mail.ru",
+                "89212222222", List.of(ROLE_USER));
+        when(persons.getCurrentUser()).thenReturn(currentUser);
+        /*Добавьте здесь настройку для findSortByConditionPageItemsIncludeUsers*/
+
+        /* Выполнение запроса*/
+        mockMvc.perform(get("/sortItemsByUser?sortDirection=1"))
+                .andExpect(status().isOk())
+                .andExpect((ResultMatcher) content().contentType(MediaType.APPLICATION_JSON))
+        /* Добавьте здесь дополнительные проверки содержимого ответа*/
+        ;
+    }
+
 
     @Test
     @WithMockUser(roles = "ROLE_USER")
@@ -84,7 +154,7 @@ public class ItemControllerTests {
         Item item = new Item();
         item.setStatus(Status.Draft);
         when(itemService.findById(1)).thenReturn(Optional.of(item));
-        when(userService.getCurrentUser()).thenReturn(new User());
+        when(persons.getCurrentUser()).thenReturn(new User());
         when(itemService.itemContains(item, Status.Draft, "currentUser")).thenReturn(true);
         when(itemService.update(item)).thenReturn(true);
 
@@ -106,7 +176,7 @@ public class ItemControllerTests {
     public void testFindSortPageItemsByUser_Success() throws Exception {
         List<Item> items = new ArrayList<>();
         Page<Item> page = new PageImpl<>(items);
-        when(userService.getCurrentUser()).thenReturn(new User());
+        when(persons.getCurrentUser()).thenReturn(new User());
         when(itemService.findAllItemsByStatusAndUsers(any(), any(), any())).thenReturn(page);
 
         mockMvc.perform(get("/item/sortItemsByUser")
