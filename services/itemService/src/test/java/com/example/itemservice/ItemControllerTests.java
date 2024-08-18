@@ -18,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultMatcher;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -33,7 +34,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,18 +60,38 @@ public class ItemControllerTests {
 
     /*ТЕСТЫ НА МЕТОДЫ USER-а:_______________________________________________________________________________*/
 
-
+    /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
+       направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+       по 5 элементов, фильтрация по статусу ("hasRole('USER')")*/
     @Test
     @WithMockUser(roles = "ROLE_USER") /* Эмулируем пользователя с ролью USER*/
     public void testFindSortPageItemsByUser_Asc() throws Exception {
+
         /* Создаем объект пользователя*/
         User currentUser = new User(1, "testUser",
                 "password", "testUser@mail.ru",
                 "89212222222", List.of(ROLE_USER));
         when(persons.getCurrentUser()).thenReturn(currentUser);
-        /* Замените на ваши данные, которые вы ожидаете в ответе*/
-        Page<Item> page = new PageImpl<>(Collections.emptyList(), PageRequest.of(0, 5), 0); /* Пустая страница*/
-        when(itemController.findSortByConditionPageItemsIncludeUsers(any(), any(), any(), any(), any()))
+
+        /* Создание тестовых данных*/
+        Item item1 = new Item();
+        item1.setId(1);
+        item1.setName("Item1");
+        item1.setStatus(Status.Draft);
+
+        Item item2 = new Item();
+        item2.setId(2);
+        item2.setName("Item2");
+        item2.setStatus(Status.Draft);
+
+        List<Item> items = List.of(item1, item2);
+
+        /* Создаем страницу с данными*/
+        Page<Item> page = new PageImpl<>(items, PageRequest.of(0, 5), items.size());
+
+        /* Настройка мока сервиса, который возвращает нужную страницу*/
+
+        when(itemService.findAllItemsByStatusAndUsers(any(), any(), any()))
                 .thenReturn(page);
 
         mockMvc.perform(get("/sortItemsByUser?sortDirection=0")
@@ -79,10 +99,14 @@ public class ItemControllerTests {
                 .andExpect(status().isOk())
                 .andExpect((ResultMatcher) content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect((ResultMatcher) jsonPath("$.content").isArray())
-                .andExpect((ResultMatcher) jsonPath("$.content").isEmpty());
+                .andExpect((ResultMatcher) jsonPath("$.content.size()").value(2))
+                .andExpect((ResultMatcher) jsonPath("$.content[0].name").value("Item1"))
+                .andExpect((ResultMatcher) jsonPath("$.content[1].name").value("Item2"));
 
         /* Проверяем, что метод был вызван*/
         verify(persons).getCurrentUser();
+        verify(itemService.findAllItemsByStatusAndUsers(any(), any(), any()));
+
     }
 
     @Test
