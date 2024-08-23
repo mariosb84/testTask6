@@ -54,21 +54,34 @@ public class ItemControllerTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    /* Вспомогательный метод для настройки мока*/
-    private void setUpJwtMocks(String testJwt) {
+    /* Вспомогательные методы для настройки мока*/
+
+    private String setRoles(int SetRole) {
+        String role;
+        if(SetRole == 0) {
+            role = "testUser";
+        } else if (SetRole == 1) {
+            role = "testOper";
+        } else {
+            role = "testAdmin";
+        }
+        return role;
+    }
+
+    private void setUpJwtMocks(String testJwt, int SetRole) {
         when(jwtService.isTokenValid(eq(testJwt), any(UserDetails.class))).thenReturn(true);
-        when(jwtService.extractUserName(eq(testJwt))).thenReturn("testUser");
+        when(jwtService.extractUserName(eq(testJwt))).thenReturn(setRoles(SetRole));
         when(tokenBlackListServiceData.findByToken(eq(testJwt))).thenReturn(Optional.empty());
     }
 
-    /*МЕТОДЫ USER-а:_______________________________________________________________________________*/
+    /*ТЕСТЫ НА МЕТОДЫ USER-а:_______________________________________________________________________________*/
 
     @Test
     @WithMockUser(username = "testUser", roles = "USER")
     public void testCreateIteByUser() throws Exception {
         String testJwt = "testToken";
         /* Используем общий метод для настройки*/
-        setUpJwtMocks(testJwt);
+        setUpJwtMocks(testJwt, 0);
 
         ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
         Item item = new Item();
@@ -95,7 +108,7 @@ public class ItemControllerTest {
         String testJwt = "testToken";
 
         /* Используем общий метод для настройки*/
-        setUpJwtMocks(testJwt);
+        setUpJwtMocks(testJwt, 0);
 
         ItemDto itemDto = new ItemDto("TestName 1", "TestText 1");
         Item item = new Item();
@@ -117,7 +130,7 @@ public class ItemControllerTest {
      String testJwt = "testToken";
 
      /* Используем общий метод для настройки*/
-     setUpJwtMocks(testJwt);
+     setUpJwtMocks(testJwt, 0);
 
      ItemDto itemDto = new ItemDto("TestName 1", "TestText 1");
         Item item = new Item();
@@ -140,7 +153,7 @@ public class ItemControllerTest {
         String testJwt = "testToken";
 
         /* Используем общий метод для настройки*/
-        setUpJwtMocks(testJwt);
+        setUpJwtMocks(testJwt, 0);
 
         ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
         Item item = new Item();
@@ -169,7 +182,7 @@ public class ItemControllerTest {
         String testJwt = "testToken";
 
         /* Используем общий метод для настройки*/
-        setUpJwtMocks(testJwt);
+        setUpJwtMocks(testJwt, 0);
 
         ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
         Item item = new Item();
@@ -192,39 +205,256 @@ public class ItemControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-/*"/editUserItem*/
+    @Test
+    @WithMockUser(username = "testUser", roles = "USER")
+    public void testEditItem_Success() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 0);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Draft);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testUser");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Draft, "testUser")).thenReturn(true);
+        when(items.editItemDto(itemDto, 1)).thenReturn(Optional.of(item));
+        when(items.update(item)).thenReturn(true);
+
+
+        mockMvc.perform(put("/item/editUserItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "testUser", roles = "USER")
+    public void testEditItem_NotFound() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 0);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Sent);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testUser");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(new Item(), Status.Draft, "testUser")).thenReturn(false);
+        when(items.editItemDto(itemDto, 1)).thenReturn(Optional.of(item));
+        when(items.update(item)).thenReturn(false);
+
+        mockMvc.perform(put("/item/editUserItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isNotFound());
+    }
+
+    /*ТЕСТЫ НА МЕТОДЫ OPERATOR-а:_______________________________________________________________________________*/
+
+    @Test
+    @WithMockUser(username = "testOper", roles = "OPERATOR")
+    public void testFindItem_Success() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 1);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Sent);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testOper");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Sent, null)).thenReturn(true);
+
+        mockMvc.perform(get("/item/findItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "testOper", roles = "OPERATOR")
+    public void testFindItem_NotFound() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 1);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Draft);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testOper");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Sent, null)).thenReturn(false);
+
+        mockMvc.perform(get("/item/findItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "testOper", roles = "OPERATOR")
+    public void testAcceptItem_Success() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 1);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Sent);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testOper");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Sent, null)).thenReturn(true);
+        when(items.update(item)).thenReturn(true);
+
+        mockMvc.perform(put("/item/acceptItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "testOper", roles = "OPERATOR")
+    public void testAcceptItem_NotFound() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 1);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Draft);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testOper");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Sent, null)).thenReturn(false);
+        when(items.update(item)).thenReturn(false);
+
+        mockMvc.perform(put("/item/acceptItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "testOper", roles = "OPERATOR")
+    public void testRejectItem_Success() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 1);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Sent);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testOper");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Sent, null)).thenReturn(true);
+        when(items.update(item)).thenReturn(true);
+
+        mockMvc.perform(put("/item/rejectItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "testOper", roles = "OPERATOR")
+    public void testRejectItem_NotFound() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 1);
+
+        ItemDto itemDto = new ItemDto("Test Item New", "Test Item New Text");
+        Item item = new Item();
+        item.setName(itemDto.getName());
+        item.setItemText(itemDto.getItemText());
+        item.setStatus(Status.Draft);
+
+        when(items.findById(1)).thenReturn(Optional.of(item));
+        User user = new User();
+        user.setUsername("testOper");
+        when(persons.getCurrentUser()).thenReturn(user);
+        when(items.itemContains(item, Status.Sent, null)).thenReturn(false);
+        when(items.update(item)).thenReturn(false);
+
+        mockMvc.perform(put("/item/rejectItem/{id}", 1)
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(new ObjectMapper().writeValueAsString(itemDto)))
+                .andExpect(status().isNotFound());
+    }
+
+    /*ТЕСТЫ НА МЕТОДЫ ADMIN-а:_______________________________________________________________________________*/
+
+    /*смотреть список пользователей*/
+
+    /* назначать пользователям права оператора*/
 
 }
 
 
-  /*  @Test
-    @WithMockUser(roles = "OPERATOR")
-    void testFindSortPageItemsByOperator() throws Exception {
-        Page<Item> page = new PageImpl<>(Collections.singletonList(item));
-        Mockito.when(items.findAllItemsByStatusAndUsers(any(PageRequest.class), any(Status.class), any()))
-                .thenReturn(page);
-
-        mockMvc.perform(get("/item/sortItemsByOperator")
-                        .param("sortDirection", "0")
-                        .param("userName", ""))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].name").value("Test Item"));
-    }*/
 
 
-
-
-
-
-
-   /* @Test
-    @WithMockUser(roles = "USER")
-    public void testSendItem_NotFound() throws Exception {
-        when(items.findById(1)).thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/item/sendItem/{id}", 1))
-                .andExpect(status().isNotFound());
-    }*/
 
 
 
