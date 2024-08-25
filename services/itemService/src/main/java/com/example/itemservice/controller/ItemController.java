@@ -29,6 +29,7 @@ import javax.validation.constraints.Min;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -230,13 +231,18 @@ public class ItemController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Boolean> setRoleOperator(
             @PathVariable int id) {
-        User user = persons.setRoleOperator(id).get();
-        if (persons.update(user)) {
-            return (ResponseEntity.ok().build());
+        Optional<User> optionalUser = persons.setRoleOperator(id);
+        if (optionalUser.isPresent()) {
+            User user = optionalUser.get();
+            if (persons.update(user)) {
+                return (ResponseEntity.ok().build());
+            }
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Роль оператора не назначена,"
+                            + " пользователь не найден, Объект не обновлен!");
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                "Роль оператора не назначена,"
-                + " пользователь не найден, Объект не обновлен!");
+                "Пользователь не найден");
     }
 
     /*ОБЩИЕ МЕТОДЫ:___________________________________________________________________________________*/

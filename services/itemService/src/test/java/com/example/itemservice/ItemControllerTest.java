@@ -3,6 +3,7 @@ package com.example.itemservice;
 import com.example.itemservice.controller.ItemController;
 import com.example.itemservice.domain.dto.ItemDto;
 import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Role;
 import com.example.itemservice.domain.model.Status;
 import com.example.itemservice.domain.model.User;
 import com.example.itemservice.service.*;
@@ -19,6 +20,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -448,7 +451,85 @@ public class ItemControllerTest {
 
     /*смотреть список пользователей*/
 
+    @Test
+    @WithMockUser(username = "testAdmin", roles = "ADMIN")
+    public void testFindAkkUsers() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 2);
+
+        User user1 = new User();
+        User user2 = new User();
+        User user3 = new User();
+        user1.setUsername("User1");
+        user2.setUsername("User2");
+        user3.setUsername("User3");
+        user1.setRoles(List.of(Role.ROLE_USER));
+        user2.setRoles(List.of(Role.ROLE_OPERATOR));
+        user3.setRoles(List.of(Role.ROLE_USER));
+        List<User> users = Arrays.asList(user1, user2, user3);
+        /* Настройка мок-сервиса*/
+        when(persons.findAll()).thenReturn(users);
+        mockMvc.perform(get("/item/findAllUsersList")
+                        .header("Authorization", "Bearer " + testJwt)
+                        .with(csrf())
+                        .contentType("application/json"))
+                .andExpect(content().json(new ObjectMapper().writeValueAsString(users)));
+    }
+
     /* назначать пользователям права оператора*/
+
+    @Test
+    @WithMockUser(username = "testAdmin", roles = "ADMIN")
+    public void testSetRoleOperator_Success() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 2);
+
+        int userId = 1;
+        User user = new User();
+        user.setId(userId);
+        user.setUsername("User");
+        user.setRoles(List.of(Role.ROLE_USER));
+
+        /* Настройка мок-сервиса*/
+        when(persons.setRoleOperator(userId)).thenReturn(Optional.of(user));
+        when(persons.update(any(User.class))).thenReturn(true);
+
+        mockMvc.perform(put("/item/setRoleOperator/{id}", userId)
+                        .header("Authorization", "Bearer" + testJwt)
+                        .with(csrf())
+                        .contentType("application/json"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "testAdmin", roles = "ADMIN")
+    public void testSetRoleOperatorUserNotFound() throws Exception {
+        String testJwt = "testToken";
+
+        /* Используем общий метод для настройки*/
+        setUpJwtMocks(testJwt, 2);
+
+        int userId = 1;
+        int userIdTest = 2;
+        User user = new User();
+        user.setId(userIdTest);
+        user.setUsername("User");
+        user.setRoles(List.of(Role.ROLE_USER));
+
+        /* Настройка мок-сервиса*/
+        when(persons.setRoleOperator(userId)).thenReturn(Optional.empty());
+        when(persons.update(any(User.class))).thenReturn(false);
+
+        mockMvc.perform(put("/item/setRoleOperator/{id}", userId)
+                        .header("Authorization", "Bearer" + testJwt)
+                        .with(csrf())
+                        .contentType("application/json"))
+                .andExpect(status().isNotFound());
+    }
 
 }
 
