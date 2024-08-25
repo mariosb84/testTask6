@@ -102,13 +102,56 @@ Docker)
 Проект "testTask2".
 
 Для запуска проекта :
+
 Создать БД командой create database;
 Запустить приложение командой mvn spring-boot:run;
 
-Чтобы выполнить какие - либо действия, необходимо выполнить регистрацию и авторизоваться.
+1)  Чтобы выполнить какие - либо действия, необходимо использовать
+следующие данные для авторизации:
 
-Стек технологий : Java 14; PostgreSQL 14.
+/auth/sign-in/
 
-Требования к окружению : Java 17, Maven 3.8, PostgreSQL 14.
+{
+"username" : "User_Test",
+"password" : "12345678900"
+}
+
+{
+"username" : "Operator_Test",
+"password" : "12345678901"
+}
+
+{
+"username" : "Administrator_Test",
+"password" : "12345678902"
+}
+
+2) Создайте нужное вам количество заявок(с ролью "User") :
+
+/item/createItem/
+
+{
+"name" : "item_1",
+"itemText" : "item_1_Text......"
+}
+.
+.
+.
+{
+"name" : "item_N",
+"itemText" : "item_N_Text......"
+}
+
+3) В файле "application.properties" вам необходимо внести ваши данные:
+  - spring.datasource.password='passwordForItemService'(пароль для БД)
+  - app.aPiDaDataToken=Token 'token'(Токен для сервиса DaData)
+  - app.aPiDaDataSecret='secret'(Секретный ключ для сервиса DaData)
+  - Токен и секретный ключ для сервиса DaData можно получить при регистрации на 
+  - сервисе: https://dadata.ru/api/
+
+
+
+Стек технологий : Java 17; PostgreSQL 14;spring-boot 2.7.14;.
+Требования к окружению : Java 17, Maven 3.8, PostgreSQL 14 - 16.
 
 Контакты : mariosb84@mail.ru .
