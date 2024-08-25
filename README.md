@@ -1,6 +1,3 @@
-[![Build Status](https://travis-ci.com/mariosb84/testTask2.svg?branch=master)](https://travis-ci.com/mariosb84/testTask2)
-[![codecov](https://codecov.io/gh/mariosb84/testTask2/branch/master/graph/badge.svg?token=M91NXXYDXH)](https://codecov.io/gh/mariosb84/testTask2)
-
 Тестовое задание:
 
 Спроектировать и разработать систему регистрации и обработки пользовательских
