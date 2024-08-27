@@ -118,7 +118,7 @@ public class ItemController {
     направления (как от самой старой к самой новой, так и наоборот) и пагинацией
     по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
     Просматривать отправленные заявки только конкретного пользователя по его
-    имени/части имени (у пользователя, соответственно, должно быть поле name)*/
+    имени/части имени (у пользователя, соответственно, должно быть поле name) ("hasRole('OPERATOR')*/
     @GetMapping("/sortItemsByOperator")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
@@ -136,7 +136,7 @@ public class ItemController {
                 Status.Sent);
     }
 
-    /*МЕТОД : НАЙТИ ПО ID  ЗАЯВКУ*/
+    /*МЕТОД : НАЙТИ ПО ID  ЗАЯВКУ ("hasRole('OPERATOR')*/
     @GetMapping("/findItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> findItem(
@@ -153,7 +153,7 @@ public class ItemController {
                 + "(не \"отправлено\")!");
     }
 
-    /*МЕТОД : ПРИНЯТЬ ЗАЯВКУ*/
+    /*МЕТОД : ПРИНЯТЬ ЗАЯВКУ ("hasRole('OPERATOR')*/
     @PutMapping("/acceptItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> acceptItem(
@@ -170,7 +170,7 @@ public class ItemController {
                 + "(не \"отправлено\")!");
     }
 
-    /*МЕТОД : ОТКЛОНИТЬ ЗАЯВКУ*/
+    /*МЕТОД : ОТКЛОНИТЬ ЗАЯВКУ ("hasRole('OPERATOR')*/
     @PutMapping("/rejectItem/{id}")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Item> rejectItem(
@@ -191,7 +191,7 @@ public class ItemController {
 
     /*Просмотреть список заявок в любом статусе с возможностью сортировки по дате создания в оба
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
-   по 5 элементов, фильтрация по статусу*/
+   по 5 элементов, фильтрация по статусу ("hasRole('ADMIN')*/
     @GetMapping("/sortItemsByAdmin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
@@ -218,14 +218,14 @@ public class ItemController {
                 inputStatus);
     }
 
-    /*смотреть список пользователей*/
+    /*смотреть список пользователей ("hasRole('ADMIN')*/
     @GetMapping("/findAllUsersList")
     @PreAuthorize("hasRole('ADMIN')")
     public List<User> findAllUsersList() {
         return this.persons.findAll();
     }
 
-    /* назначать пользователям права оператора*/
+    /* назначать пользователям права оператора ("hasRole('ADMIN')*/
 
     @PutMapping("/setRoleOperator/{id}")
     @PreAuthorize("hasRole('ADMIN')")
