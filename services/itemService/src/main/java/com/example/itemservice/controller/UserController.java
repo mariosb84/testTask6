@@ -59,7 +59,7 @@ public class UserController {
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
     public ResponseEntity<User> create(@Valid @RequestBody User user) {
-       if (user.getUsername() == null || user.getPassword() == null) {
+        if (user.getUsername() == null || user.getPassword() == null) {
             throw new NullPointerException("Login and password mustn't be empty");
         }
         if (user.getPassword().length() < 3
@@ -78,8 +78,8 @@ public class UserController {
 
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
-     public ResponseEntity<Boolean> update(@Valid @RequestBody UserDto person) {
-           if ((this.persons.updatePatch(person))) {
+    public ResponseEntity<Boolean> update(@Valid @RequestBody UserDto person) {
+        if ((this.persons.updatePatch(person))) {
             return ResponseEntity.ok().build();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не обновлен!");
@@ -96,20 +96,22 @@ public class UserController {
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не удален!");
     }
 
-    @ExceptionHandler(value = { IllegalArgumentException.class })
+    @ExceptionHandler(value = {IllegalArgumentException.class})
     public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() { {
-            put("message", e.getMessage());
-            put("type", e.getClass());
-        }}));
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() {
+            {
+                put("message", e.getMessage());
+                put("type", e.getClass());
+            }
+        }));
         LOGGER.error(e.getLocalizedMessage());
     }
 
     @GetMapping("/getCurrentUser")
     public ResponseEntity<User> getCurrentUser(@CurrentSecurityContext(expression = "authentication?.name")
-                                                   String username) {
+                                               String username) {
         var person = personsData.findUserByUsername(username);
         if (person != null) {
             return new ResponseEntity<>(

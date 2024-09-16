@@ -1,0 +1,2331 @@
+/*App*/
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+package com.example.itemservice;
+
+import liquibase.integration.spring.SpringLiquibase;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import javax.sql.DataSource;
+
+@SpringBootApplication
+@EnableFeignClients
+public class ItemServiceApplication extends SpringBootServletInitializer {
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(ItemServiceApplication.class);
+	}
+
+	@Bean
+	public SpringLiquibase liquibase(DataSource ds) {
+		SpringLiquibase liquibase = new SpringLiquibase();
+		liquibase.setChangeLog("classpath:liquibase-changeLog.xml");
+		liquibase.setDataSource(ds);
+		return liquibase;
+	}
+
+
+	@Bean
+	public BCryptPasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(ItemServiceApplication.class, args);
+
+	}
+
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* @Controller */
+
+/ 1 /////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.controller;
+
+import com.example.itemservice.domain.dto.ItemDto;
+import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
+import com.example.itemservice.handlers.Operation;
+import com.example.itemservice.service.ItemService;
+import com.example.itemservice.service.UserService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+
+@AllArgsConstructor
+@RestController
+@RequestMapping("/item")
+public class ItemController {
+
+    private final ItemService items;
+
+    private final UserService persons;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItemController.class.getSimpleName());
+
+    private final ObjectMapper objectMapper;
+
+    /*МЕТОДЫ USER-а:_______________________________________________________________________________*/
+
+    /*Просмотреть список заявок  user-а с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу ("hasRole('USER')")*/
+    @GetMapping("/sortItemsByUser")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByUser(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection
+    ) {
+        User currentUser = persons.getCurrentUser();
+        return findSortByConditionPageItemsIncludeUsers(0, 5,
+                sortDirection == 0 ? "asc" : "desc",
+                Status.Draft,
+                List.of(persons.findUserByUsername(currentUser.getUsername())));
+    }
+
+    /*СОЗДАТЬ ЗАЯВКУ ("hasRole('USER')")*/
+    @PostMapping("/createItem")
+    @Validated(Operation.OnCreate.class)
+    @PreAuthorize("hasRole('USER')")
+        public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
+            Item item = items.addItemDto(itemDto);
+            var result = this.items.add(item);
+            return new ResponseEntity<>(
+                    result.orElse(new Item()),
+                    result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
+            );
+    }
+
+    /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ ("hasRole('USER')")*/
+    @PutMapping("/sendItem/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Item> sendItem(@PathVariable int id) {
+        Item item = items.findById(id).get();
+        User currentUser = persons.getCurrentUser();
+        if (items.itemContains(item, Status.Draft, currentUser.getUsername())) {
+                item.setStatus(Status.Sent);
+                if (items.update(item)) {
+                    return   ResponseEntity.ok().build();
+                }
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Статус заявки не изменен("
+                + "возможно - неверный статус заявки"
+                + "(не \"черновик\")/либо заявка создана другим пользователем)!");
+    }
+
+    /* МЕТОД РЕДАКТИРОВАНИЯ  ЗАЯВОК В СТАТУСЕ "ЧЕРНОВИК", СОЗДАННЫХ ПОЛЬЗОВАТЕЛЕМ ("hasRole('USER')")*/
+
+    @PutMapping("/editUserItem/{id}")
+    @Validated(Operation.OnUpdate.class)
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Item> editUserItem(
+            @PathVariable int id, @Valid @RequestBody ItemDto itemDto) {
+        Item item = items.findById(id).get();
+        User currentUser = persons.getCurrentUser();
+        if (items.itemContains(item, Status.Draft, currentUser.getUsername())) {
+            item = items.editItemDto(itemDto, id).get();
+                if (items.update(item)) {
+                    return   ResponseEntity.ok().build();
+                }
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не обновлена("
+                + "возможно - неверный статус заявки"
+                + "(не \"черновик\")/либо заявка создана другим пользователем)!");
+    }
+
+    /*МЕТОДЫ OPERATOR-а:_______________________________________________________________________*/
+
+    /*Просмотреть список всех отправленных на рассмотрение заявок с возможностью
+    сортировки по дате создания в оба
+    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+    по 5 элементов, фильтрация по статусу. Должна быть фильтрация по имени.
+    Просматривать отправленные заявки только конкретного пользователя по его
+    имени/части имени (у пользователя, соответственно, должно быть поле name)*/
+    @GetMapping("/sortItemsByOperator")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "userName", defaultValue = "") String userName
+    ) {
+        if (userName != null) {
+            return findSortByConditionPageItemsIncludeUsers(0, 5,
+                    sortDirection == 0 ? "asc" : "desc",
+                    Status.Sent,
+                    persons.findUserByUsernameContains(userName));
+        }
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc",
+                Status.Sent);
+    }
+
+    /*МЕТОД : НАЙТИ ПО ID  ЗАЯВКУ*/
+    @GetMapping("/findItem/{id}")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Item> findItem(
+            @PathVariable int id) {
+        Item item = items.findById(id).get();
+        if (items.itemContains(item, Status.Sent, null)) {
+            return new ResponseEntity<>(
+                    item,
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"отправлено\")!");
+    }
+
+    /*МЕТОД : ПРИНЯТЬ ЗАЯВКУ*/
+    @PutMapping("/acceptItem/{id}")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Item> acceptItem(
+            @PathVariable int id) {
+        Item item = items.findById(id).get();
+        if (items.itemContains(item, Status.Sent, null)) {
+            item.setStatus(Status.Accepted);
+            if (items.update(item)) {
+                return   ResponseEntity.ok().build();
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"отправлено\")!");
+    }
+
+    /*МЕТОД : ОТКЛОНИТЬ ЗАЯВКУ*/
+    @PutMapping("/rejectItem/{id}")
+    @PreAuthorize("hasRole('OPERATOR')")
+    public ResponseEntity<Item> rejectItem(
+            @PathVariable int id) {
+        Item item = items.findById(id).get();
+        if (items.itemContains(item, Status.Sent, null)) {
+            item.setStatus(Status.Rejected);
+            if (items.update(item)) {
+                return   ResponseEntity.ok().build();
+            }
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
+                + "возможно - неверный статус заявки"
+                + "(не \"отправлено\")!");
+    }
+
+    /*МЕТОДЫ ADMIN-а:___________________________________________________________________________*/
+
+    /*Просмотреть список заявок в любом статусе с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу*/
+    @GetMapping("/sortItemsByAdmin")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
+            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "status", defaultValue = "0")@Min(0) @Max(2) Integer status,
+            @RequestParam(value = "userName", defaultValue = "") String userName
+    ) {
+        Status inputStatus;
+        if (status == 0) {
+            inputStatus = Status.Sent;
+        } else if (status == 1) {
+            inputStatus = Status.Accepted;
+        } else {
+            inputStatus = Status.Rejected;
+        }
+        if (userName != null) {
+            return findSortByConditionPageItemsIncludeUsers(0, 5,
+                    sortDirection == 0 ? "asc" : "desc",
+                    inputStatus,
+                    persons.findUserByUsernameContains(userName));
+        }
+        return findSortByConditionPageItems(0, 5,
+                sortDirection == 0 ? "asc" : "desc",
+                inputStatus);
+    }
+
+    /*смотреть список пользователей*/
+    @GetMapping("/findAllUsersList")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<User> findAllUsersList() {
+        return this.persons.findAll();
+    }
+
+    /* назначать пользователям права оператора*/
+
+    @PutMapping("/setRoleOperator/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Boolean> setRoleOperator(
+            @PathVariable int id) {
+        User user = persons.setRoleOperator(id).get();
+        if (persons.update(user)) {
+            return (ResponseEntity.ok().build());
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "Роль оператора не назначена,"
+                + " пользователь не найден, Объект не обновлен!");
+    }
+
+    /*ОБЩИЕ МЕТОДЫ:___________________________________________________________________________________*/
+
+    /*НАЙТИ ВСЕ ЗАЯВКИ*/
+    @GetMapping("/findAll")
+    public List<Item> findAll() {
+        return this.items.findAll();
+    }
+
+    /*НАЙТИ ЗАЯВКУ ПО ID*/
+    @GetMapping("/{id}")
+    public ResponseEntity<Item> findById(@PathVariable int id) {
+        var item = this.items.findById(id);
+        if (item.isPresent()) {
+            return new ResponseEntity<>(
+                    item.orElse(new Item()),
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена!");
+    }
+
+    /*ОБНОВИТЬ ЗАЯВКУ*/
+    @PutMapping("/")
+    @Validated(Operation.OnUpdate.class)
+     public ResponseEntity<Boolean> update(@RequestBody Item item) {
+        if ((this.items.update(item))) {
+            return ResponseEntity.ok().build();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не обновлена!");
+    }
+
+    /*УДАЛИТЬ ЗАЯВКУ*/
+    @DeleteMapping("/{id}")
+    @Validated(Operation.OnDelete.class)
+    public ResponseEntity<Boolean> delete(@Valid @PathVariable int id) {
+        Item item = new Item();
+        item.setId(id);
+        if ((this.items.delete(item))) {
+            return ResponseEntity.ok().build();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не удалена!");
+    }
+
+    /*универсальный метод сортировки, включая USER-s List
+    Просмотреть список заявок с возможностью сортировки по дате создания в оба
+    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+    по 5 элементов, фильтрация по статусу*/
+    private  ResponseEntity<Page<Item>> findSortByConditionPageItemsIncludeUsers(
+            @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
+            @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
+            String direction,
+            Status status,
+            List<User> users
+    ) {
+        return  new ResponseEntity<>(items.findAllItemsByStatusAndUsers(
+                PageRequest.of(offset, limit,
+                        Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
+                                        : Sort.Order.desc("created")))),
+                status,
+                users),
+                HttpStatus.OK);
+    }
+
+    /*универсальный метод сортировки
+   Просмотреть список заявок с возможностью сортировки по дате создания в оба
+   направления (как от самой старой к самой новой, так и наоборот) и пагинацией
+   по 5 элементов, фильтрация по статусу*/
+    private  ResponseEntity<Page<Item>> findSortByConditionPageItems(
+            @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
+            @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
+            String direction,
+            Status status
+    ) {
+        return  new ResponseEntity<>(items.findAllItemsByStatus(
+                PageRequest.of(offset, limit,
+                        Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
+                                : Sort.Order.desc("created")))),
+                status
+                ),
+                HttpStatus.OK);
+    }
+
+    /*EXEPTION HANDLER*/
+    @ExceptionHandler(value = { IllegalArgumentException.class })
+    public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setContentType("application/json");
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() {
+            {
+            put("message", e.getMessage());
+            put("type", e.getClass());
+          }
+        }));
+        LOGGER.error(e.getLocalizedMessage());
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.controller;
+
+import com.example.itemservice.domain.model.User;
+import com.example.itemservice.domain.dto.UserDto;
+import com.example.itemservice.handlers.Operation;
+import com.example.itemservice.service.UserService;
+import com.example.itemservice.service.UserServiceData;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+
+@AllArgsConstructor
+@RestController
+@RequestMapping("/person")
+public class UserController {
+
+    private final UserService persons;
+
+    private final UserServiceData personsData;
+
+    private final BCryptPasswordEncoder encoder;
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class.getSimpleName());
+
+    private final ObjectMapper objectMapper;
+
+    @GetMapping("/")
+    public List<User> findAll() {
+        return this.persons.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> findById(@PathVariable int id) {
+        var person = this.persons.findById(id);
+        if (person.isPresent()) {
+            return new ResponseEntity<User>(
+                    person.orElse(new User()),
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
+    }
+
+    @PostMapping("/")
+    @Validated(Operation.OnCreate.class)
+    public ResponseEntity<User> create(@Valid @RequestBody User user) {
+       if (user.getUsername() == null || user.getPassword() == null) {
+            throw new NullPointerException("Login and password mustn't be empty");
+        }
+        if (user.getPassword().length() < 3
+                || user.getPassword().isEmpty()
+                || user.getPassword().isBlank()) {
+            throw new IllegalArgumentException(
+                    "Invalid password. Password length must be more than 3 characters.");
+        }
+        user.setPassword(encoder.encode(user.getPassword()));
+        var result = this.persons.add(user);
+        return new ResponseEntity<User>(
+                result.orElse(new User()),
+                result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
+        );
+    }
+
+    @PutMapping("/")
+    @Validated(Operation.OnUpdate.class)
+     public ResponseEntity<Boolean> update(@Valid @RequestBody UserDto person) {
+           if ((this.persons.updatePatch(person))) {
+            return ResponseEntity.ok().build();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не обновлен!");
+    }
+
+    @DeleteMapping("/{id}")
+    @Validated(Operation.OnDelete.class)
+    public ResponseEntity<Boolean> delete(@Valid @PathVariable int id) {
+        User user = new User();
+        user.setId(id);
+        if ((this.persons.delete(user))) {
+            return ResponseEntity.ok().build();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не удален!");
+    }
+
+    @ExceptionHandler(value = { IllegalArgumentException.class })
+    public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setContentType("application/json");
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() { {
+            put("message", e.getMessage());
+            put("type", e.getClass());
+        }}));
+        LOGGER.error(e.getLocalizedMessage());
+    }
+
+    @GetMapping("/getCurrentUser")
+    public ResponseEntity<User> getCurrentUser(@CurrentSecurityContext(expression = "authentication?.name")
+                                                   String username) {
+        var person = personsData.findUserByUsername(username);
+        if (person != null) {
+            return new ResponseEntity<>(
+                    person,
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
+    }
+
+    @GetMapping("/findByUserName")
+    public ResponseEntity<List<User>> findUsersByUsernameContains(@RequestParam(value = "userName") String userName) {
+        var personsList = this.persons.findUserByUsernameContains(userName);
+        if (!personsList.isEmpty()) {
+            return new ResponseEntity<>(
+                    personsList,
+                    HttpStatus.OK
+            );
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не найден!");
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 3 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.controller;
+
+import com.example.itemservice.domain.dto.JwtAuthenticationResponseDto;
+import com.example.itemservice.domain.dto.SignInRequest;
+import com.example.itemservice.domain.dto.SignUpRequest;
+import com.example.itemservice.service.AuthenticationService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+@RestController
+@RequestMapping("/auth")
+@RequiredArgsConstructor
+public class AuthController {
+    private final AuthenticationService authenticationService;
+
+    @PostMapping("/sign-up")
+    public JwtAuthenticationResponseDto signUp(@RequestBody @Valid SignUpRequest request) {
+        return authenticationService.signUp(request);
+    }
+
+    @PostMapping("/sign-in")
+    public JwtAuthenticationResponseDto signIn(@RequestBody @Valid SignInRequest request) {
+        return authenticationService.signIn(request);
+    }
+
+    @PostMapping("/auth_logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
+        authenticationService.logout(new JwtAuthenticationResponseDto(token));
+       return  ResponseEntity.ok("Logged out successfully!");
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* Domain*/
+
+/*model */
+
+// 1 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.model;
+
+import com.example.itemservice.handlers.Operation;
+import lombok.*;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Entity
+@Table(name = "items")
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+public class Item {
+
+        private static final DateTimeFormatter FORMATTER =
+                DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss");
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "item_id")
+    @NotNull(message = "Id must be non null", groups = {
+            Operation.OnUpdate.class, Operation.OnDelete.class
+    })
+        private int id;
+    @Size(min = 5, max = 50, message = "Item name must be more than 5 and less 50")
+    @Column(name = "item_name")
+        private String name;
+    @Size(min = 8, max = 255, message = "Item text must be more than 8 less 255")
+    @Column(name = "item_Text")
+    private String itemText;
+    @NotNull
+    @Column(name = "item_created")
+    private LocalDateTime created = LocalDateTime.now();
+    @Column(name = "item_status")
+    @NonNull
+    @Enumerated(EnumType.STRING)
+    private Status status;
+    @ManyToMany
+    @JoinTable(
+                name = "item_persons",
+                joinColumns = { @JoinColumn(name = "item_person_id") },
+                inverseJoinColumns = { @JoinColumn(name = "person_id") }
+        )
+        private List<User> users = new ArrayList<>();
+
+        public LocalDateTime getTime() {
+            return created;
+        }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.model;
+
+import lombok.*;
+
+import javax.persistence.*;
+
+@Data
+@Builder
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Entity
+@Table(name = "token_black_list")
+@NoArgsConstructor
+@AllArgsConstructor
+@RequiredArgsConstructor
+@Setter
+@Getter
+public class JwtAuthenticationResponse {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "token_id")
+    private long id;
+    @NonNull
+    @Column(name = "token_name")
+    private String token;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.model;
+
+public enum Role {
+
+    ROLE_USER,
+    ROLE_OPERATOR,
+    ROLE_ADMIN
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 4 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.model;
+
+public enum Status {
+
+        Draft,
+        Sent,
+        Accepted,
+        Rejected
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 5 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+package com.example.itemservice.domain.model;
+
+import com.example.itemservice.handlers.Operation;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import javax.persistence.*;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+
+@Entity
+@Table(name = "person")
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+@Builder
+public class User implements UserDetails {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    @Column(name = "person_id")
+    @NotNull(message = "Id must be non null", groups = {
+            Operation.OnUpdate.class, Operation.OnDelete.class
+    })
+    private long id;
+    @NotNull(message = "UserName must be non null", groups = {
+            Operation.OnCreate.class
+    })
+    @Size(min = 5, max = 50, message = "UserName must be more than 5 and less 50")
+    @Column(name = "person_login")
+    private String username;
+    @Size(min = 8, max = 255, message = "Password must be more than 8 and less 255")
+    @NotNull(message = "Password must be non null")
+    @Column(name = "person_password")
+    private String password;
+    @NotNull(message = "Email must be non null")
+    @Size(min = 5, max = 255, message = "Email must be more than 5 and less 255")
+    @Email(message = "Email адрес должен быть в формате user@example.com")
+    @Column(name = "person_email")
+    private String email;
+    @Size(min = 11, max = 12, message = "Phone must be more than 10 and less 13")
+    @Column(name = "person_phone")
+    private String phone;
+    @CollectionTable(
+            name = "person_roles",
+            joinColumns = { @JoinColumn(name = "person_id") }
+    )
+    @Column(name = "role")
+    @NonNull
+    @Enumerated(EnumType.STRING)
+    /*- делаем через @EntityGraph в методах репозитория*/
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<Role> roles;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        ArrayList<SimpleGrantedAuthority> listAuthorities = new ArrayList<>();
+        roles.stream().map(Role::name)
+                .map(SimpleGrantedAuthority::new).forEach(listAuthorities::add);
+        return listAuthorities;
+    }
+
+    @Override
+    public String getUsername() {
+        return username;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
+}
+
+/* dto */
+
+/// 1 ///////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.dto;
+
+import lombok.*;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+public class ItemDto {
+
+    @Size(min = 5, max = 50, message = "Название заявки должно содержать от 5 до 50 символов")
+    @NotBlank(message = "Название заявки не может быть пустыми")
+    private String name;
+
+    @Size(min = 8, max = 255, message = "Длина текста должна быть от 8 до 255 символов")
+    private String itemText;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class JwtAuthenticationResponseDto {
+
+    private String token;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.dto;
+
+import lombok.Data;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+@Data
+public class SignInRequest {
+
+    @Size(min = 5, max = 50, message = "Имя пользователя должно содержать от 5 до 50 символов")
+    @NotBlank(message = "Имя пользователя не может быть пустыми")
+    private String username;
+
+    @Size(min = 8, max = 255, message = "Длина пароля должна быть от 8 до 255 символов")
+    @NotBlank(message = "Пароль не может быть пустыми")
+    private String password;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 4 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.dto;
+
+import lombok.Data;
+
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+@Data
+public class SignUpRequest {
+
+    @Size(min = 5, max = 50, message = "Имя пользователя должно содержать от 5 до 50 символов")
+    @NotBlank(message = "Имя пользователя не может быть пустыми")
+    private String username;
+
+    @Size(min = 8, max = 255, message = "Длина пароля должна быть от 8 до 255 символов")
+    private String password;
+
+    @Size(min = 5, max = 255, message = "Адрес электронной почты должен содержать от 5 до 255 символов")
+    @NotBlank(message = "Адрес электронной почты не может быть пустыми")
+    @Email(message = "Email адрес должен быть в формате user@example.com")
+    private String email;
+
+    @Size(min = 11, max = 12, message = "Номер телефона должен содержать 11 - 12 символов")
+    @NotBlank(message = "Номер телефона не может быть пустыми")
+    private String phone;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 5 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.domain.dto;
+
+import lombok.*;
+
+import javax.persistence.*;
+
+@Data
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+public class UserDto {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
+    private long id;
+    @NonNull
+    private String password;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/* filter*/
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.filter;
+
+import com.example.itemservice.service.JwtService;
+import com.example.itemservice.service.TokenBlackListServiceData;
+import com.example.itemservice.service.UserServiceData;
+import liquibase.util.StringUtils;
+import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Component
+@RequiredArgsConstructor
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    public static final String BEARER_PREFIX = "Bearer ";
+    public static final String HEADER_NAME = "Authorization";
+    private final JwtService jwtService;
+    private final UserServiceData userService;
+    private final TokenBlackListServiceData tokenBlackListServiceData;
+
+    @Override
+    protected void doFilterInternal(
+            @NonNull HttpServletRequest request,
+            @NonNull HttpServletResponse response,
+            @NonNull FilterChain filterChain
+    ) throws ServletException, IOException {
+
+        /* Получаем токен из заголовка*/
+        var authHeader = request.getHeader(HEADER_NAME);
+        if (StringUtils.isEmpty(authHeader) || !StringUtils.startsWith(authHeader, BEARER_PREFIX)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        /* Обрезаем префикс и получаем имя пользователя из токена*/
+        var jwt = authHeader.substring(BEARER_PREFIX.length());
+        var username = jwtService.extractUserName(jwt);
+
+        if (StringUtils.isNotEmpty(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
+            UserDetails userDetails = userService
+                    .userDetailsService()
+                    .loadUserByUsername(username);
+
+            /* Если токен валиден, то аутентифицируем пользователя*/
+            if (
+                    (jwtService.isTokenValid(jwt, userDetails))
+                    && (
+                            (tokenBlackListServiceData.findByToken(jwt).isEmpty())
+                    || !(tokenBlackListServiceData.findByToken(jwt).get().getToken().equals(jwt))
+                    )
+            ) {
+                SecurityContext context = SecurityContextHolder.createEmptyContext();
+
+                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                        userDetails,
+                        null,
+                        userDetails.getAuthorities()
+                );
+
+                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                context.setAuthentication(authToken);
+                SecurityContextHolder.setContext(context);
+            }
+        }
+        filterChain.doFilter(request, response);
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*handlers*/
+
+//// 1 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.handlers;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.HashMap;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class.getSimpleName());
+
+    private final ObjectMapper objectMapper;
+
+    public GlobalExceptionHandler(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
+    @ExceptionHandler(value = {NullPointerException.class})
+    public void handleException(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setContentType("application/json");
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() { {
+            put("message", "Some of fields empty");
+            put("details", e.getMessage());
+        }}));
+        LOGGER.error(e.getMessage());
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.handlers;
+
+public class Operation {
+
+    public interface OnCreate { }
+    public interface OnDelete { }
+    public interface OnUpdate { }
+
+}
+
+/* @Repository*/ 
+
+/// 1 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.repository;
+
+import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
+import lombok.NonNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+@Repository
+public interface ItemRepository extends CrudRepository<Item, Integer> {
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
+    @NonNull
+    List<Item> findAll();
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
+    Page<Item> findAllItemsByStatusAndUsersIn(Pageable pageable, Status status, List<User> users);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
+    Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "users")
+    List<Item> findAllItemsByUsersIn(List<User> users);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.repository;
+
+
+import com.example.itemservice.domain.model.JwtAuthenticationResponse;
+import lombok.NonNull;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+public interface TokenBlackListRepository extends CrudRepository<JwtAuthenticationResponse, Long> {
+
+    @NonNull
+    List<JwtAuthenticationResponse> findAll();
+
+    Optional<JwtAuthenticationResponse> findByToken(String token);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.repository;
+
+import com.example.itemservice.domain.model.User;
+import lombok.NonNull;
+import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+
+@Repository
+    public interface UserRepository extends JpaRepository<User, Long> {
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    @NonNull
+    List<User> findAll();
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    List<User> findAllUsersByUsername(String username);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    List<User> findAllUsersByUsernameContaining(String usernamePart);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    Optional<User> findUserByUsername(String username);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByPhone(String phone);
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*security*/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.security;
+
+import com.example.itemservice.filter.JwtAuthenticationFilter;
+import com.example.itemservice.service.UserServiceData;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import java.util.List;
+
+import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfiguration {
+
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final UserServiceData userService;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http.csrf(AbstractHttpConfigurer::disable)
+                /* Своего рода отключение CORS (разрешение запросов со всех доменов)*/
+
+                .cors(cors -> cors.configurationSource(request -> {
+                    var corsConfiguration = new CorsConfiguration();
+                    corsConfiguration.setAllowedOriginPatterns(List.of("*"));
+                    corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+                    corsConfiguration.setAllowedHeaders(List.of("*"));
+                    corsConfiguration.setAllowCredentials(true);
+                    return corsConfiguration;
+                }))
+
+                /* Настройка доступа к конечным точкам*/
+
+                .authorizeHttpRequests(request -> {
+                    try {
+                        request
+                                /* Можно указать конкретный путь, * - 1 уровень вложенности, ** - любое количество уровней вложенности*/
+                                .antMatchers("/auth/**").permitAll()
+                                .anyRequest().authenticated()
+                                .and()
+                                .logout()
+                                .logoutUrl("/auth/auth_logout")
+                                .invalidateHttpSession(true)
+                                .deleteCookies("JSESSIONID")
+                                .permitAll();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userService.userDetailsService());
+        authProvider.setPasswordEncoder(bCryptPasswordEncoder);
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+            throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*@Service*/
+
+/// 1 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+import com.example.itemservice.domain.dto.JwtAuthenticationResponseDto;
+import com.example.itemservice.domain.model.JwtAuthenticationResponse;
+import com.example.itemservice.domain.dto.SignInRequest;
+import com.example.itemservice.domain.dto.SignUpRequest;
+import com.example.itemservice.domain.model.Role;
+import com.example.itemservice.domain.model.User;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+import static com.example.itemservice.filter.JwtAuthenticationFilter.BEARER_PREFIX;
+
+@Service
+@RequiredArgsConstructor
+public class AuthenticationService {
+
+    private final UserServiceData userService;
+    private final JwtService jwtService;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final TokenBlackListServiceData tokenBlackListServiceData;
+
+    /**
+     * Регистрация пользователя
+     *
+     * @param request данные пользователя
+     * @return токен
+     */
+    public JwtAuthenticationResponseDto signUp(SignUpRequest request) {
+
+        var user = User.builder()
+                .username(request.getUsername())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .email(request.getEmail())
+                .phone(request.getPhone())
+                .roles(List.of(Role.ROLE_USER))
+                .build();
+        userService.add(user);
+
+        var jwt = jwtService.generateToken(user);
+        return new JwtAuthenticationResponseDto(jwt);
+    }
+
+    /**
+     * Аутентификация пользователя
+     *
+     * @param request данные пользователя
+     * @return токен
+     */
+    public JwtAuthenticationResponseDto signIn(SignInRequest request) {
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                request.getUsername(),
+                request.getPassword()
+        ));
+
+        var user = userService
+                .userDetailsService()
+                .loadUserByUsername(request.getUsername());
+
+        var jwt = jwtService.generateToken(user);
+        return new JwtAuthenticationResponseDto(jwt);
+    }
+
+    public void logout(JwtAuthenticationResponseDto jwtAuthenticationResponseDto) {
+        var jwt = jwtAuthenticationResponseDto.getToken().substring(BEARER_PREFIX.length());
+        JwtAuthenticationResponse jwtAuthenticationResponse = new JwtAuthenticationResponse();
+        jwtAuthenticationResponse.setToken(jwt);
+        tokenBlackListServiceData.add(jwtAuthenticationResponse);
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+import com.example.itemservice.domain.dto.ItemDto;
+import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface ItemService {
+
+    List<Item> findAll();
+
+    Optional<Item> add(Item item);
+
+    boolean update(Item item);
+
+    Optional<Item> findById(int id);
+
+    boolean delete(Item item);
+
+    Page<Item> findAllItemsByStatusAndUsers(Pageable pageable, Status status, List<User> users);
+
+    Page<Item> findAllItemsByStatus(Pageable pageable, Status status);
+
+    List<Item> findAllItemContainsUser(User user);
+
+    boolean itemContains(Item item, Status status, String userName);
+
+    Item addItemDto(ItemDto itemDto);
+
+    Optional<Item> editItemDto(ItemDto itemDto, int id);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+import com.example.itemservice.domain.dto.ItemDto;
+import com.example.itemservice.domain.model.Item;
+import com.example.itemservice.domain.model.Status;
+import com.example.itemservice.domain.model.User;
+import com.example.itemservice.repository.ItemRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@AllArgsConstructor
+public class ItemServiceData implements ItemService {
+
+    private final ItemRepository itemRepository;
+
+    private final UserServiceData personsData;
+
+    @Override
+    public List<Item> findAll() {
+        return itemRepository.findAll();
+    }
+
+    @Override
+    public Optional<Item> add(Item item) {
+        Item result = itemRepository.save(item);
+        return Optional.of(result);
+    }
+
+    @Override
+    public boolean update(Item item) {
+        itemRepository.save(item);
+        return itemRepository.findById(item.getId()).isPresent();
+    }
+
+    @Override
+    public Optional<Item> findById(int id) {
+        return itemRepository.findById(id);
+    }
+
+    @Override
+    public boolean delete(Item item) {
+        return itemRepository.findById(item.getId()).isEmpty();
+    }
+
+    @Override
+    public Page<Item> findAllItemsByStatusAndUsers(Pageable pageable, Status status, List<User> users) {
+        return itemRepository.findAllItemsByStatusAndUsersIn(pageable, status, users);
+    }
+
+    @Override
+    public Page<Item> findAllItemsByStatus(Pageable pageable, Status status) {
+        return itemRepository.findAllItemsByStatus(pageable, status);
+    }
+
+    @Override
+    public List<Item> findAllItemContainsUser(User user) {
+        return itemRepository.findAllItemsByUsersIn(List.of(user));
+    }
+
+    @Override
+    public boolean itemContains(Item item, Status status, String userName) {
+        var statusEqual = item.getStatus().equals(status);
+        return userName != null ? statusEqual
+                && (item.getUsers().stream().map(User::getUsername).
+                anyMatch(s -> s.equals(userName))) : statusEqual;
+    }
+
+    @Override
+    public Item addItemDto(ItemDto itemDto) {
+        Item item = new Item();
+        if (itemDto != null) {
+            item.setName(itemDto.getName());
+            item.setItemText(itemDto.getItemText());
+        }
+            item.setStatus(Status.Draft);
+        item.setUsers(List.of(personsData.getCurrentUser()));
+        return item;
+    }
+
+    @Override
+    public Optional<Item> editItemDto(ItemDto itemDto, int id) {
+        Optional<Item> item = itemRepository.findById(id);
+        if (item.isPresent()) {
+            item.get().setName(itemDto.getName());
+            item.get().setItemText(itemDto.getItemText());
+            return item;
+        }
+        return Optional.empty();
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 4 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+
+import com.example.itemservice.domain.model.User;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import java.security.Key;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+@Service
+@AllArgsConstructor
+@NoArgsConstructor
+public class JwtService {
+
+    @Value("${token.signing.key}")
+    private String jwtSigningKey;
+
+    /**
+     * Извлечение имени пользователя из токена
+     *
+     * @param token токен
+     * @return имя пользователя
+     */
+    public String extractUserName(String token) {
+        return extractClaim(token, Claims::getSubject);
+    }
+
+    /**
+     * Генерация токена
+     *
+     * @param userDetails данные пользователя
+     * @return токен
+     */
+    public String generateToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        if (userDetails instanceof User customUserDetails) {
+            claims.put("id", customUserDetails.getId());
+            claims.put("email", customUserDetails.getEmail());
+            claims.put("role", customUserDetails.getRoles());
+        }
+        return generateToken(claims, userDetails);
+    }
+
+    /**
+     * Проверка токена на валидность
+     *
+     * @param token       токен
+     * @param userDetails данные пользователя
+     * @return true, если токен валиден
+     */
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        final String userName = extractUserName(token);
+        return ((userName.equals(userDetails.getUsername())) && (!isTokenExpired(token)));
+    }
+
+    /**
+     * Извлечение данных из токена
+     *
+     * @param token           токен
+     * @param claimsResolvers функция извлечения данных
+     * @param <T>             тип данных
+     * @return данные
+     */
+    private <T> T extractClaim(String token, Function<Claims, T> claimsResolvers) {
+        final Claims claims = extractAllClaims(token);
+        return claimsResolvers.apply(claims);
+    }
+
+    /**
+     * Генерация токена
+     *
+     * @param extraClaims дополнительные данные
+     * @param userDetails данные пользователя
+     * @return токен
+     */
+    private String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        return Jwts.builder().setClaims(extraClaims).setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + 100000 * 60 * 24))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
+    }
+
+    /**
+     * Проверка токена на просроченность
+     *
+     * @param token токен
+     * @return true, если токен просрочен
+     */
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    /**
+     * Извлечение даты истечения токена
+     *
+     * @param token токен
+     * @return дата истечения
+     */
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
+    }
+
+    /**
+     * Извлечение всех данных из токена
+     *
+     * @param token токен
+     * @return данные
+     */
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser().setSigningKey(getSigningKey()).build().parseClaimsJws(token)
+                .getBody();
+    }
+
+    /**
+     * Получение ключа для подписи токена
+     *
+     * @return ключ
+     */
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSigningKey);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 5 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+import com.example.itemservice.domain.model.JwtAuthenticationResponse;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface TokenBlackListService {
+
+    List<JwtAuthenticationResponse> findAll();
+
+    JwtAuthenticationResponse add(JwtAuthenticationResponse jwtAuthenticationResponse);
+
+    Optional<JwtAuthenticationResponse> findByToken(String token);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 6 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+import com.example.itemservice.domain.model.JwtAuthenticationResponse;
+import com.example.itemservice.repository.TokenBlackListRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+@Service
+@AllArgsConstructor
+public class TokenBlackListServiceData implements TokenBlackListService {
+
+    private TokenBlackListRepository tokenBlackListRepository;
+
+    @Override
+    public List<JwtAuthenticationResponse> findAll() {
+        return tokenBlackListRepository.findAll();
+    }
+
+    @Override
+    public JwtAuthenticationResponse add(JwtAuthenticationResponse jwtAuthenticationResponse) {
+        return tokenBlackListRepository.save(jwtAuthenticationResponse);
+    }
+
+    @Override
+    public Optional<JwtAuthenticationResponse> findByToken(String token) {
+        return tokenBlackListRepository.findByToken(token);
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 7 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+
+
+import com.example.itemservice.domain.model.User;
+import com.example.itemservice.domain.dto.UserDto;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface UserService {
+
+     List<User> findAll();
+
+    Optional<User> add(User user);
+
+   boolean update(User user);
+
+     Optional<User> findById(long id);
+
+    boolean delete(User user);
+
+    boolean updatePatch(UserDto userDto);
+
+    User findUserByUsername(String username);
+
+    User save(User user);
+
+    List<User> findUserByUsernameContains(String username);
+
+    Optional<User> setRoleOperator(long id);
+
+    User getCurrentUser();
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 8 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.service;
+
+import com.example.itemservice.domain.model.Role;
+import com.example.itemservice.domain.model.User;
+import com.example.itemservice.domain.dto.UserDto;
+import com.example.itemservice.repository.UserRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.example.itemservice.domain.model.Role.ROLE_ADMIN;
+import static com.example.itemservice.domain.model.Role.ROLE_USER;
+import static java.util.Collections.emptyList;
+
+@Service
+@AllArgsConstructor
+public class UserServiceData implements UserService, UserDetailsService {
+
+    private final BCryptPasswordEncoder encoder;
+
+    private final UserRepository userRepository;
+
+
+    @Override
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Создание пользователя
+     *
+     * @return созданный пользователь
+     */
+    @Override
+    public Optional<User> add(User user) {
+        if (userRepository.existsByUsername(user.getUsername())) {
+            /* Заменить на свои исключения*/
+            throw new RuntimeException("Пользователь с таким именем уже существует");
+        }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Пользователь с таким email уже существует");
+        }
+        if (userRepository.existsByPhone(user.getPhone())) {
+            throw new RuntimeException("Пользователь с таким номером телефона уже существует");
+        }
+        user.setRoles(List.of(ROLE_USER));
+        return Optional.ofNullable(save(user));
+    }
+
+    @Override
+    public boolean update(User user) {
+        userRepository.save(user);
+        return userRepository.findById(user.getId()).isPresent();
+
+    }
+
+    @Override
+    public Optional<User> findById(long id) {
+        return userRepository.findById(id);
+    }
+
+    @Override
+    public boolean delete(User user) {
+        userRepository.delete(user);
+        return userRepository.findById(user.getId()).isEmpty();
+    }
+
+    @Override
+    public boolean updatePatch(UserDto userDto) {
+        var person = userRepository.findById(userDto.getId());
+        if (person.isPresent()) {
+            User result = person.get();
+            result.setPassword(encoder.encode(userDto.getPassword()));
+             this.add(result);
+             return true;
+        }
+        return false;
+    }
+
+    /**
+     * Получение пользователя по имени пользователя
+     *
+     * @return пользователь
+     */
+    @Override
+    public User findUserByUsername(String username) {
+        return userRepository.findUserByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+    }
+
+    /**
+     * Сохранение пользователя
+     *
+     * @return сохраненный пользователь
+     */
+    @Override
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
+    @Override
+    public List<User> findUserByUsernameContains(String username) {
+        return userRepository.findAllUsersByUsernameContaining(username);
+    }
+
+    @Override
+    public Optional<User> setRoleOperator(long id) {
+        Optional<User> user = findById(id);
+        if (user.isPresent() && user.get().getRoles().contains(Role.ROLE_USER)
+                && !(user.get().getRoles().contains(Role.ROLE_OPERATOR))) {
+            List<Role> roles = user.get().getRoles();
+            roles.add(Role.ROLE_OPERATOR);
+            user.get().setRoles(roles);
+            return user;
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findUserByUsername(username).orElseThrow();
+        if (user == null) {
+            throw new UsernameNotFoundException(username);
+        }
+        return new org.springframework.security.core.userdetails.User(
+                user.getUsername(), user.getPassword(), emptyList());
+    }
+
+    /**
+     * Получение пользователя по имени пользователя
+     * <p>
+     * Нужен для Spring Security
+     *
+     * @return пользователь
+     */
+    public UserDetailsService userDetailsService() {
+        return this::findUserByUsername;
+    }
+
+    /**
+     * Получение текущего пользователя
+     *
+     * @return текущий пользователь
+     */
+    @Override
+    public User getCurrentUser() {
+        /* Получение имени пользователя из контекста Spring Security*/
+        return findUserByUsername(SecurityContextHolder.
+                getContext().getAuthentication().getName());
+    }
+
+    /**
+     * Выдача прав администратора текущему пользователю
+     * <p>
+     * Нужен для демонстрации
+     */
+    @Deprecated
+    public void getAdmin() {
+        var user = getCurrentUser();
+        user.setRoles(List.of(ROLE_ADMIN));
+        save(user);
+    }
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*app.properties*/
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+spring.application.name=itemService
+spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/itemService
+spring.datasource.username=postgres
+! ????? ?????????? ?????? ? ????? ?? :
+! ЗДЕСЬ ВСТАВЛЯЕТЕ СВОЙ ПАРОЛЬ ОТ БД :
+!spring.datasource.password=passwordForItemService
+spring.datasource.password=SB14041984sb
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+token.signing.key=53A73E5F1C4E0A2D3B5F2D784E6A1B423D6F247D1F6E5C3A596D635A75327855
+
+app.feign.config.name=DaData-api
+app.feign.config.url=https://cleaner.dadata.ru/api/v1/clean/
+
+! ????? ?????????? ?????? ? ????? ?? :
+! ЗДЕСЬ ВСТАВЛЯЕТЕ СВОИ ТОКЕНЫ ОТ API DaData :
+!app.aPiDaDataToken=Token token
+!app.aPiDaDataSecret=secret
+app.aPiDaDataToken=Token f18af8810c2fa9ac5e9d8ce4fac62e6292b9a80d
+app.aPiDaDataSecret=848851c968a751c00bd01c8eed32a2830dd8a138
+
+feign.client.config.DaData-api.connect-timeout=20000
+feign.client.config.DaData-api.read-timeout=20000
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/*feign*/
+
+/*config*/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+package com.example.itemservice.feign.config;
+
+import com.example.itemservice.feign.FeignCustomErrorDecoder;
+import feign.Logger;
+import feign.RequestInterceptor;
+import feign.codec.ErrorDecoder;
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+import org.springframework.cloud.openfeign.support.SpringEncoder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class CustomFeignClientConfiguration {
+
+    @Value("${app.aPiDaDataToken}")
+    private String aPiDaDataToken;
+
+    @Value("${app.aPiDaDataSecret}")
+    private String aPiDaDataSecret;
+
+    @Bean
+    Logger.Level feignLoggerLevel() {
+        return Logger.Level.FULL;
+    }
+
+    @Bean
+    public RequestInterceptor requestInterceptor() {
+        return requestTemplate -> {
+            requestTemplate.header("Authorization", aPiDaDataToken);
+            requestTemplate.header("X-Secret", aPiDaDataSecret);
+            requestTemplate.header("Content-Type", "application/json");
+            requestTemplate.header("Accept", "application/json");
+        };
+    }
+
+    @Bean
+    public SpringEncoder encoder(ObjectFactory<HttpMessageConverters> converters) {
+        return new SpringEncoder(converters);
+    }
+
+    @Bean
+    public ErrorDecoder errorDecoder() {
+        return new FeignCustomErrorDecoder();
+    }
+
+}
+/
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 1 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import com.example.itemservice.feign.config.CustomFeignClientConfiguration;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+import java.util.List;
+
+@FeignClient(value = "${app.feign.config.name}", url = "${app.feign.config.url}",
+        configuration = CustomFeignClientConfiguration.class)
+public interface DaDataApiClient {
+    @RequestMapping(method = RequestMethod.POST, value = "/phone")
+    List<PhoneData> readPhoneDataByPhoneNumber(@RequestBody PhoneSource phoneSource);
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
+
+@RestController
+@RequestMapping(value = "/phone")
+@RequiredArgsConstructor
+public class DaDataController {
+
+    private final DaDataApiClient apiClient;
+    private final GetPhoneData getPhoneData;
+
+    @PreAuthorize("hasRole('USER') || hasRole('OPERATOR') || hasRole('ADMIN')")
+    @PostMapping
+    public ResponseEntity<List<PhoneDataDto>> checkPhoneData(@RequestBody PhoneSource phoneSource) {
+        var checkResult = getPhoneData.getStandPhoneData(
+                apiClient.readPhoneDataByPhoneNumber(phoneSource));
+        if (checkResult != null) {
+            return ResponseEntity.ok(checkResult);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "номер телефона не найден!");
+    }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+
+import feign.Response;
+import feign.codec.ErrorDecoder;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class FeignCustomErrorDecoder implements ErrorDecoder {
+
+    @Override public Exception decode(String methodKey, Response response) {
+
+        /*START DECODING ORIGINAL ERROR MESSAGE*/
+        String erroMessage = null;
+        Reader reader = null;
+
+        /*capturing error message from response body.*/
+        try {
+            reader = response.body().asReader(StandardCharsets.UTF_8);
+            String result = IOUtils.toString(reader);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            FeignExceptionMessage exceptionMessage = mapper.readValue(result,
+                    FeignExceptionMessage.class);
+
+            erroMessage = exceptionMessage.getMessage();
+
+        } catch (IOException e) {
+            log.error("IO Exception on reading exception message feign client" + e);
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                log.error("IO Exception on reading exception message feign client" + e);
+            }
+        }
+
+        /*END DECODING ORIGINAL ERROR MESSAGE*/
+
+        return switch (response.status()) {
+            case 400 -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Bad Request Through Feign");
+                /*handle exception*/
+            }
+            case 401 -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Unauthorized Request Through Feign");
+                /*handle exception*/
+            }
+            case 404 -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Unidentified Request Through Feign");
+                /*handle exception*/
+            }
+            default -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Common Feign Exception");
+                /*handle exception*/
+            }
+        };
+    }
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 4 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import lombok.Data;
+
+@Data
+public class FeignExceptionMessage {
+
+    private String timestamp;
+    private int status;
+    private String error;
+    private String message;
+    private String path;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/// 5 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import lombok.NoArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@NoArgsConstructor
+@Service
+public class GetPhoneData {
+
+    public List<PhoneDataDto> getStandPhoneData(List<PhoneData> phoneDataList) {
+       return phoneDataList.stream().map(p -> new PhoneDataDto(
+               p.getCity_code(), p.getCountry_code(), p.getPhone()
+           )
+        ).collect(Collectors.toList());
+    }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 6 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import lombok.Data;
+
+import javax.validation.constraints.Size;
+
+@Data
+public class PhoneData {
+    /*Исходный телефон одной строкой*/
+    @Size(max = 100)
+    private String source;
+    /*Тип телефона*/
+    @Size(max = 50)
+    private String type;
+    /*Стандартизованный телефон одной строкой*/
+    @Size(max = 50)
+    private String phone;
+    /*Код страны*/
+    @Size(max = 5)
+    private String country_code;
+    /*Код города / DEF-код*/
+    @Size(max = 5)
+    private String city_code;
+    /*Локальный номер телефона*/
+    @Size(max = 10)
+    private String number;
+    /*Добавочный номер*/
+    @Size(max = 10)
+    private String extension;
+    /*Оператор связи (только для России)*/
+    @Size(max = 100)
+    private String provider;
+    /*Страна*/
+    @Size(max = 50)
+    private String country;
+    /*Регион (только для России)*/
+    @Size(max = 100)
+    private String region;
+    /*Город (только для стационарных телефонов)*/
+    @Size(max = 100)
+    private String city;
+    /*Часовой пояс города для России,
+     часовой пояс страны — для
+     иностранных телефонов.
+     Если у страны несколько поясов, вернёт
+     минимальный и максимальный через слеш:
+     UTC+5/UTC+6*/
+    @Size(max = 50)
+    private String timezone;
+   /* Признак конфликта телефона с адресом*/
+    @Size(max = 5)
+    private String qc_conflict;
+    /*Код проверки*/
+    @Size(max = 5)
+    private String qc;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// 7 ////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.Size;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
+public class PhoneDataDto {
+
+    /*Код города / DEF-код*/
+    @Size(max = 5)
+    private String cityCode;
+    /*Код страны*/
+    @Size(max = 5)
+    private String countryCode;
+    /*Стандартизованный телефон одной строкой*/
+    @Size(max = 50)
+    private String phoneNumber;
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 8 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.Data;
+
+import javax.validation.constraints.Size;
+import java.util.List;
+
+@Data
+@JsonSerialize(using = PhoneSourceSerializer.class)
+public class PhoneSource {
+
+    /*Исходный телефон одной строкой*/
+    @Size(max = 100)
+    private List<String> source;
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//// 9 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+
+import java.io.IOException;
+
+public class PhoneSourceSerializer extends JsonSerializer<PhoneSource> {
+
+    @Override
+    public void serialize(PhoneSource phoneSource, JsonGenerator jsonGenerator,
+                          SerializerProvider serializerProvider) throws IOException {
+        /* Начинаем массив*/
+        jsonGenerator.writeStartArray();
+        /* Перебираем список и записываем каждый элемент*/
+        for (String phone : phoneSource.getSource()) {
+            jsonGenerator.writeString(phone);
+        }
+        /* Закрываем массив*/
+        jsonGenerator.writeEndArray();
+    }
+
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+

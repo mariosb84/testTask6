@@ -1,0 +1,36 @@
+Как вызвать
+Пример запроса:
+
+
+POST https://cleaner.dadata.ru/api/v1/clean/phone
+[ "раб 846)231.60.14 *139" ]
+
+Укажите при вызове:
+
+Content-Type: application/json.
+Accept: application/json.
+f18af8810c2fa9ac5e9d8ce4fac62e6292b9a80d — API-ключ.
+848851c968a751c00bd01c8eed32a2830dd8a138 — секретный ключ.
+Тело запроса передавайте в кодировке UTF-8.
+
+Что в ответе
+Стандартизованный объект:
+
+[
+{
+    "source": "раб 846)231.60.14 *139",
+    "type": "Стационарный",
+    "phone": "+7 846 231-60-14 доб. 139",
+    "country_code": "7",
+    "city_code": "846",
+    "number": "2316014",
+    "extension": "139",
+    "provider": "ООО \"СИПАУТНЭТ\"",
+    "country": "Россия",
+    "region": "Самарская область",
+    "city": "Самара",
+    "timezone": "UTC+4",
+    "qc_conflict": 0,
+    "qc": 0
+}
+]

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class AuthController {
     @PostMapping("/auth_logout")
     public ResponseEntity<?> logout(@RequestHeader("Authorization") String token) {
         authenticationService.logout(new JwtAuthenticationResponseDto(token));
-       return  ResponseEntity.ok("Logged out successfully!");
+        return ResponseEntity.ok("Logged out successfully!");
     }
 
 }

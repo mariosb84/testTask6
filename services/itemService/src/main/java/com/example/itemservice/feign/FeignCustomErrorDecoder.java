@@ -16,7 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FeignCustomErrorDecoder implements ErrorDecoder {
 
-    @Override public Exception decode(String methodKey, Response response) {
+    @Override
+    public Exception decode(String methodKey, Response response) {
 
         /*START DECODING ORIGINAL ERROR MESSAGE*/
         String erroMessage = null;

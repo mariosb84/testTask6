@@ -1,0 +1,42 @@
+С @NamedEntityGraph: 
+
+Hibernate: select user0_.person_id as person_i1_2_, user0_.person_email as person_e2_2_, user0_.person_password as person_p3_2_, user0_.person_phone as person_p4_2_, user0_.person_login as person_l5_2_ from person user0_
+ where user0_.person_login=?
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+
+
+
+Hibernate: select user0_.person_id as person_i1_2_, user0_.person_email as person_e2_2_, user0_.person_password as person_p3_2_, user0_.person_phone as person_p4_2_, user0_.person_login as person_l5_2_,
+
+ roles1_.person_id as person_i1_3_0__, roles1_.role as role2_3_0__ from person user0_ left outer join person_roles roles1_ on user0_.person_id=roles1_.person_id
+
+
+
+
+
+
+
+
+
+БЕЗ @NamedEntityGraph: 
+
+Hibernate: select user0_.person_id as person_i1_2_, user0_.person_email as person_e2_2_, user0_.person_password as person_p3_2_, user0_.person_phone as person_p4_2_, user0_.person_login as person_l5_2_ from person user0_
+ where user0_.person_login=?
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+
+
+
+Hibernate: select user0_.person_id as person_i1_2_, user0_.person_email as person_e2_2_, user0_.person_password as person_p3_2_, user0_.person_phone as person_p4_2_, user0_.person_login as person_l5_2_ from person user0_
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+
+Hibernate: select roles0_.person_id as person_i1_3_0_, roles0_.role as role2_3_0_ from person_roles roles0_ where roles0_.person_id=?
+

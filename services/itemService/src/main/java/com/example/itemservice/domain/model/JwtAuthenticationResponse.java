@@ -6,14 +6,10 @@ import javax.persistence.*;
 
 @Data
 @Builder
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Entity
 @Table(name = "token_black_list")
 @NoArgsConstructor
 @AllArgsConstructor
-@RequiredArgsConstructor
-@Setter
-@Getter
 public class JwtAuthenticationResponse {
 
     @Id
@@ -21,6 +17,7 @@ public class JwtAuthenticationResponse {
     @EqualsAndHashCode.Include
     @Column(name = "token_id")
     private long id;
+
     @NonNull
     @Column(name = "token_name")
     private String token;

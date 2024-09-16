@@ -52,7 +52,7 @@ public class ItemController {
     @GetMapping("/sortItemsByUser")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Page<Item>> findSortPageItemsByUser(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection
+            @RequestParam(value = "sortDirection", defaultValue = "0") @Min(0) @Max(1) Integer sortDirection
     ) {
         User currentUser = persons.getCurrentUser();
         return findSortByConditionPageItemsIncludeUsers(0, 5,
@@ -65,13 +65,13 @@ public class ItemController {
     @PostMapping("/createItem")
     @Validated(Operation.OnCreate.class)
     @PreAuthorize("hasRole('USER')")
-        public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
-            Item item = items.addItemDto(itemDto);
-            var result = this.items.add(item);
-            return new ResponseEntity<>(
-                    result.orElse(new Item()),
-                    result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
-            );
+    public ResponseEntity<Item> create(@Valid @RequestBody ItemDto itemDto) {
+        Item item = items.addItemDto(itemDto);
+        var result = this.items.add(item);
+        return new ResponseEntity<>(
+                result.orElse(new Item()),
+                result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
+        );
     }
 
     /*МЕТОД : ОТПРАВИТЬ ЗАЯВКУ ОПЕРАТОРУ НА РАССМОТРЕНИЕ ("hasRole('USER')")*/
@@ -81,10 +81,10 @@ public class ItemController {
         Item item = items.findById(id).get();
         User currentUser = persons.getCurrentUser();
         if (items.itemContains(item, Status.Draft, currentUser.getUsername())) {
-                item.setStatus(Status.Sent);
-                if (items.update(item)) {
-                    return   ResponseEntity.ok().build();
-                }
+            item.setStatus(Status.Sent);
+            if (items.update(item)) {
+                return ResponseEntity.ok().build();
+            }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Статус заявки не изменен("
                 + "возможно - неверный статус заявки"
@@ -102,9 +102,9 @@ public class ItemController {
         User currentUser = persons.getCurrentUser();
         if (items.itemContains(item, Status.Draft, currentUser.getUsername())) {
             item = items.editItemDto(itemDto, id).get();
-                if (items.update(item)) {
-                    return   ResponseEntity.ok().build();
-                }
+            if (items.update(item)) {
+                return ResponseEntity.ok().build();
+            }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не обновлена("
                 + "возможно - неверный статус заявки"
@@ -122,7 +122,7 @@ public class ItemController {
     @GetMapping("/sortItemsByOperator")
     @PreAuthorize("hasRole('OPERATOR')")
     public ResponseEntity<Page<Item>> findSortPageItemsByOperator(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "sortDirection", defaultValue = "0") @Min(0) @Max(1) Integer sortDirection,
             @RequestParam(value = "userName", defaultValue = "") String userName
     ) {
         if (userName != null) {
@@ -162,7 +162,7 @@ public class ItemController {
         if (items.itemContains(item, Status.Sent, null)) {
             item.setStatus(Status.Accepted);
             if (items.update(item)) {
-                return   ResponseEntity.ok().build();
+                return ResponseEntity.ok().build();
             }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
@@ -179,7 +179,7 @@ public class ItemController {
         if (items.itemContains(item, Status.Sent, null)) {
             item.setStatus(Status.Rejected);
             if (items.update(item)) {
-                return   ResponseEntity.ok().build();
+                return ResponseEntity.ok().build();
             }
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Заявка не найдена("
@@ -195,8 +195,8 @@ public class ItemController {
     @GetMapping("/sortItemsByAdmin")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Page<Item>> findSortPageItemsByAdmin(
-            @RequestParam(value = "sortDirection", defaultValue = "0")@Min(0) @Max(1) Integer sortDirection,
-            @RequestParam(value = "status", defaultValue = "0")@Min(0) @Max(2) Integer status,
+            @RequestParam(value = "sortDirection", defaultValue = "0") @Min(0) @Max(1) Integer sortDirection,
+            @RequestParam(value = "status", defaultValue = "0") @Min(0) @Max(2) Integer status,
             @RequestParam(value = "userName", defaultValue = "") String userName
     ) {
         Status inputStatus;
@@ -269,7 +269,7 @@ public class ItemController {
     /*ОБНОВИТЬ ЗАЯВКУ*/
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
-     public ResponseEntity<Boolean> update(@RequestBody Item item) {
+    public ResponseEntity<Boolean> update(@RequestBody Item item) {
         if ((this.items.update(item))) {
             return ResponseEntity.ok().build();
         }
@@ -293,16 +293,16 @@ public class ItemController {
     направления (как от самой старой к самой новой, так и наоборот) и пагинацией
     по 5 элементов, фильтрация по статусу*/
     public ResponseEntity<Page<Item>> findSortByConditionPageItemsIncludeUsers(
-            @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
-            @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
+            @RequestParam(value = "offset", defaultValue = "0") @Min(0) Integer offset,
+            @RequestParam(value = "limit", defaultValue = "5") @Min(1) @Max(100) Integer limit,
             String direction,
             Status status,
             List<User> users
     ) {
-        return  new ResponseEntity<>(items.findAllItemsByStatusAndUsers(
+        return new ResponseEntity<>(items.findAllItemsByStatusAndUsers(
                 PageRequest.of(offset, limit,
                         Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
-                                        : Sort.Order.desc("created")))),
+                                : Sort.Order.desc("created")))),
                 status,
                 users),
                 HttpStatus.OK);
@@ -313,32 +313,18 @@ public class ItemController {
    направления (как от самой старой к самой новой, так и наоборот) и пагинацией
    по 5 элементов, фильтрация по статусу*/
     public ResponseEntity<Page<Item>> findSortByConditionPageItems(
-            @RequestParam(value = "offset", defaultValue = "0")@Min(0) Integer offset,
-            @RequestParam(value = "limit", defaultValue = "5")@Min(1) @Max(100) Integer limit,
+            @RequestParam(value = "offset", defaultValue = "0") @Min(0) Integer offset,
+            @RequestParam(value = "limit", defaultValue = "5") @Min(1) @Max(100) Integer limit,
             String direction,
             Status status
     ) {
-        return  new ResponseEntity<>(items.findAllItemsByStatus(
+        return new ResponseEntity<>(items.findAllItemsByStatus(
                 PageRequest.of(offset, limit,
                         Sort.by((direction.equals("asc") ? Sort.Order.asc("created")
                                 : Sort.Order.desc("created")))),
                 status
-                ),
+        ),
                 HttpStatus.OK);
-    }
-
-    /*EXEPTION HANDLER*/
-    @ExceptionHandler(value = { IllegalArgumentException.class })
-    public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setStatus(HttpStatus.BAD_REQUEST.value());
-        response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() {
-            {
-            put("message", e.getMessage());
-            put("type", e.getClass());
-          }
-        }));
-        LOGGER.error(e.getLocalizedMessage());
     }
 
 }

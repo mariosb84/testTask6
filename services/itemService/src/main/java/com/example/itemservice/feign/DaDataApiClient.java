@@ -1,6 +1,7 @@
 package com.example.itemservice.feign;
 
 import com.example.itemservice.feign.config.CustomFeignClientConfiguration;
+import com.example.itemservice.feign.domain.model.PhoneData;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;

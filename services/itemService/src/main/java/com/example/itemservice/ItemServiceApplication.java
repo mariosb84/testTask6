@@ -15,28 +15,28 @@ import javax.sql.DataSource;
 @EnableFeignClients
 public class ItemServiceApplication extends SpringBootServletInitializer {
 
-	@Override
-	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-		return application.sources(ItemServiceApplication.class);
-	}
+    @Override
+    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+        return application.sources(ItemServiceApplication.class);
+    }
 
-	@Bean
-	public SpringLiquibase liquibase(DataSource ds) {
-		SpringLiquibase liquibase = new SpringLiquibase();
-		liquibase.setChangeLog("classpath:liquibase-changeLog.xml");
-		liquibase.setDataSource(ds);
-		return liquibase;
-	}
+    @Bean
+    public SpringLiquibase liquibase(DataSource ds) {
+        SpringLiquibase liquibase = new SpringLiquibase();
+        liquibase.setChangeLog("classpath:liquibase-changeLog.xml");
+        liquibase.setDataSource(ds);
+        return liquibase;
+    }
 
 
-	@Bean
-	public BCryptPasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
+    @Bean
+    public BCryptPasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-	public static void main(String[] args) {
-		SpringApplication.run(ItemServiceApplication.class, args);
+    public static void main(String[] args) {
+        SpringApplication.run(ItemServiceApplication.class, args);
 
-	}
+    }
 
 }

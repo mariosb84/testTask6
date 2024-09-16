@@ -1,0 +1,339 @@
+
+// 1 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+package com.example.itemservice;
+
+import liquibase.integration.spring.SpringLiquibase;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.cloud.openfeign.EnableFeignClients;
+import org.springframework.context.annotation.Bean;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import javax.sql.DataSource;
+
+@SpringBootApplication
+@EnableFeignClients
+public class ItemServiceApplication extends SpringBootServletInitializer {
+
+	@Override
+	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+		return application.sources(ItemServiceApplication.class);
+	}
+
+	@Bean
+	public SpringLiquibase liquibase(DataSource ds) {
+		SpringLiquibase liquibase = new SpringLiquibase();
+		liquibase.setChangeLog("classpath:liquibase-changeLog.xml");
+		liquibase.setDataSource(ds);
+		return liquibase;
+	}
+
+
+	@Bean
+	public BCryptPasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	public static void main(String[] args) {
+		SpringApplication.run(ItemServiceApplication.class, args);
+
+	}
+
+
+}
+
+/// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign.config;
+
+import com.example.itemservice.feign.FeignCustomErrorDecoder;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.Logger;
+import feign.RequestInterceptor;
+import feign.codec.ErrorDecoder;
+import feign.form.spring.SpringFormEncoder;
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.boot.autoconfigure.http.HttpMessageConverters;
+import org.springframework.cloud.openfeign.support.SpringEncoder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+
+
+@Configuration
+public class CustomFeignClientConfiguration {
+
+
+
+    @Bean
+    Logger.Level feignLoggerLevel() {
+        return Logger.Level.FULL;
+    }
+
+    @Bean
+    public RequestInterceptor requestInterceptor() {
+        return requestTemplate -> {
+            requestTemplate.header("Authorization", "Token f18af8810c2fa9ac5e9d8ce4fac62e6292b9a80d");
+            requestTemplate.header("X-Secret", "848851c968a751c00bd01c8eed32a2830dd8a138");
+            requestTemplate.header("Content-Type", "application/json");
+            requestTemplate.header("Accept", "application/json");
+        };
+    }
+
+    @Bean
+    public SpringFormEncoder encoder(ObjectFactory<HttpMessageConverters> converters) {
+        return new SpringFormEncoder(new SpringEncoder(converters));
+    }
+
+    @Bean
+    public ErrorDecoder errorDecoder() {
+        return new FeignCustomErrorDecoder();
+    }
+
+    @Bean
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter() {
+        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        jsonConverter.setObjectMapper(objectMapper);
+        jsonConverter.setDefaultCharset(null);
+        return jsonConverter;
+    }
+
+}
+
+/// 3 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+package com.example.itemservice.feign;
+
+import lombok.Data;
+
+import javax.validation.constraints.Size;
+
+@Data
+public class PhoneData {
+
+    /*Исходный телефон одной строкой*/
+    @Size(max = 100)
+    private String source;
+    /*Тип телефона*/
+    @Size(max = 50)
+    private String type;
+    /*Стандартизованный телефон одной строкой*/
+    @Size(max = 50)
+    private String phone;
+    /*Код страны*/
+    @Size(max = 5)
+    private String country_code;
+    /*Код города / DEF-код*/
+    @Size(max = 5)
+    private String city_code;
+    /*Локальный номер телефона*/
+    @Size(max = 10)
+    private String number;
+    /*Добавочный номер*/
+    @Size(max = 10)
+    private String extension;
+    /*Оператор связи (только для России)*/
+    @Size(max = 100)
+    private String provider;
+    /*Страна*/
+    @Size(max = 50)
+    private String country;
+    /*Регион (только для России)*/
+    @Size(max = 100)
+    private String region;
+    /*Город (только для стационарных телефонов)*/
+    @Size(max = 100)
+    private String city;
+    /*Часовой пояс города для России,
+     часовой пояс страны — для
+     иностранных телефонов.
+     Если у страны несколько поясов, вернёт
+     минимальный и максимальный через слеш:
+     UTC+5/UTC+6*//*
+    @Size(max = 50)
+    private String timezone;
+   /* Признак конфликта телефона с адресом*/
+    @Size(max = 5)
+    private String qc_conflict;
+    /*Код проверки*/
+    @Size(max = 5)
+    private String qc;
+
+}
+
+
+//// 4 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import com.example.itemservice.feign.config.CustomFeignClientConfiguration;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+@FeignClient(value = "${app.feign.config.nameTwo}", url = "${app.feign.config.urlTwo}",
+        configuration = CustomFeignClientConfiguration.class)
+public interface DadataApiClient {
+    @RequestMapping(method = RequestMethod.POST, value = "/phoneCheck/")
+    PhoneData readPhoneDataByPhoneNumber(@RequestBody String source);
+
+}
+
+
+/// 5 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+@RestController
+@RequestMapping(value = "/phoneCheck/")
+@RequiredArgsConstructor
+public class DadataController {
+
+    private final DadataApiClient apiClient;
+
+    @PostMapping
+   public ResponseEntity<PhoneData> checkPhoneData(@RequestBody String sourcePhone) {
+        var checkResult = apiClient.readPhoneDataByPhoneNumber(sourcePhone);
+        if (checkResult != null) {
+            return ResponseEntity.ok(checkResult);
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                "номер телефона не найден!");
+    }
+
+}
+
+//// 6 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+spring.application.name=itemService
+spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/itemService
+spring.datasource.username=postgres
+! ????? ?????????? ?????? ? ????? ?? :
+!spring.datasource.password=passwordForItemService
+spring.datasource.password=SB14041984sb
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.jdbc.lob.non_contextual_creation=true
+
+token.signing.key=53A73E5F1C4E0A2D3B5F2D784E6A1B423D6F247D1F6E5C3A596D635A75327855
+
+app.feign.config.name=instantwebtools-api
+app.feign.config.url=https://api.instantwebtools.net/v1/
+
+app.feign.config.nameTwo=dadata-api
+app.feign.config.urlTwo=https://cleaner.dadata.ru/api/v1/clean/phone/
+
+feign.client.config.dadata-api.connect-timeout=20000
+feign.client.config.dadata-api.read-timeout=20000
+
+/// 7 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+package com.example.itemservice.feign;
+
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.apache.commons.io.IOUtils;
+
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+
+import feign.Response;
+import feign.codec.ErrorDecoder;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class FeignCustomErrorDecoder implements ErrorDecoder {
+
+    @Override public Exception decode(String methodKey, Response response) {
+
+        /*START DECODING ORIGINAL ERROR MESSAGE*/
+        String erroMessage = null;
+        Reader reader = null;
+
+        /*capturing error message from response body.*/
+        try {
+            reader = response.body().asReader(StandardCharsets.UTF_8);
+            String result = IOUtils.toString(reader);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            FeignExceptionMessage exceptionMessage = mapper.readValue(result,
+                    FeignExceptionMessage.class);
+
+            erroMessage = exceptionMessage.getMessage();
+
+        } catch (IOException e) {
+            log.error("IO Exception on reading exception message feign client" + e);
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {
+                log.error("IO Exception on reading exception message feign client" + e);
+            }
+        }
+
+        /*END DECODING ORIGINAL ERROR MESSAGE*/
+
+        return switch (response.status()) {
+            case 400 -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Bad Request Through Feign");
+                /*handle exception*/
+            }
+            case 401 -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Unauthorized Request Through Feign");
+                /*handle exception*/
+            }
+            case 404 -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Unidentified Request Through Feign");
+                /*handle exception*/
+            }
+            default -> {
+                log.error("Error in request went through feign client {} ", erroMessage);
+                yield new Exception("Common Feign Exception");
+                /*handle exception*/
+            }
+        };
+    }
+
+}
+
+////// 8 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+package com.example.itemservice.feign;
+
+import lombok.Data;
+
+@Data
+public class FeignExceptionMessage {
+    private String timestamp;
+    private int status;
+    private String error;
+    private String message;
+    private String path;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+

@@ -6,11 +6,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
 @Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
-@NoArgsConstructor
-@Setter
-@Getter
 public class ItemDto {
 
     @Size(min = 5, max = 50, message = "Название заявки должно содержать от 5 до 50 символов")

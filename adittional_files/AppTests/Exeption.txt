@@ -1,0 +1,6 @@
+2024-08-13 16:52:49.986 ERROR 4748 --- [nio-8080-exec-2] c.e.i.feign.FeignCustomErrorDecoder      : Error in request went through feign client null 
+2024-08-13 16:52:50.005 ERROR 4748 --- [nio-8080-exec-2] o.a.c.c.C.[.[.[/].[dispatcherServlet]    : Servlet.service() for servlet [dispatcherServlet] in
+ context with path [] threw exception [Request processing failed; nested exception is java.lang.reflect.UndeclaredThrowableException] with root cause
+
+java.lang.Exception: Unidentified Request Through Feign
+	at com.example.itemservice.feign.FeignCustomErrorDecoder.decode(FeignCustomErrorDecoder.java:63) ~[classes/:na]

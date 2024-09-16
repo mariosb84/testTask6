@@ -56,9 +56,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             /* Если токен валиден, то аутентифицируем пользователя*/
             if (
                     (jwtService.isTokenValid(jwt, userDetails))
-                    && (
+                            && (
                             (tokenBlackListServiceData.findByToken(jwt).isEmpty())
-                    || !(tokenBlackListServiceData.findByToken(jwt).get().getToken().equals(jwt))
+                                    || !(tokenBlackListServiceData.findByToken(jwt).get().getToken().equals(jwt))
                     )
             ) {
                 SecurityContext context = SecurityContextHolder.createEmptyContext();

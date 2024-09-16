@@ -27,11 +27,27 @@ public class GlobalExceptionHandler {
     public void handleException(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         response.setContentType("application/json");
-        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() { {
-            put("message", "Some of fields empty");
-            put("details", e.getMessage());
-        }}));
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() {
+            {
+                put("message", "Some of fields empty");
+                put("details", e.getMessage());
+            }
+        }));
         LOGGER.error(e.getMessage());
+    }
+
+    /*EXEPTION HANDLER*/
+    @ExceptionHandler(value = {IllegalArgumentException.class})
+    public void exceptionHandler(Exception e, HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setContentType("application/json");
+        response.getWriter().write(objectMapper.writeValueAsString(new HashMap<>() {
+            {
+                put("message", e.getMessage());
+                put("type", e.getClass());
+            }
+        }));
+        LOGGER.error(e.getLocalizedMessage());
     }
 
 }
