@@ -18,9 +18,10 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.userservice.domain.dto.model.Role.;
+import static com.example.userservice.domain.dto.model.Role.ROLE_ADMIN;
+import static com.example.userservice.domain.dto.model.Role.ROLE_USER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import org.springframework.boot.test.context.SpringBootTest;
