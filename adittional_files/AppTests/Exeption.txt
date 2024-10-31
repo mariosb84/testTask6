@@ -3,4 +3,4 @@
  context with path [] threw exception [Request processing failed; nested exception is java.lang.reflect.UndeclaredThrowableException] with root cause
 
 java.lang.Exception: Unidentified Request Through Feign
-	at com.example.itemservice.feign.FeignCustomErrorDecoder.decode(FeignCustomErrorDecoder.java:63) ~[classes/:na]
+	at com.example.userservice.feign.FeignCustomErrorDecoder.decode(FeignCustomErrorDecoder.java:63) ~[classes/:na]

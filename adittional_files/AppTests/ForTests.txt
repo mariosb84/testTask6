@@ -1,7 +1,7 @@
 /*App*/
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-package com.example.itemservice;
+package com.example.userservice;
 
 import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.boot.SpringApplication;
@@ -49,15 +49,15 @@ public class ItemServiceApplication extends SpringBootServletInitializer {
 
 / 1 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.handlers.Operation;
-import com.example.itemservice.service.ItemService;
-import com.example.itemservice.service.UserService;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.handlers.Operation;
+import com.example.userservice.service.ItemService;
+import com.example.userservice.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -392,13 +392,13 @@ public class ItemController {
 
 /// 2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.domain.dto.UserDto;
-import com.example.itemservice.handlers.Operation;
-import com.example.itemservice.service.UserService;
-import com.example.itemservice.service.UserServiceData;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.UserDto;
+import com.example.userservice.handlers.Operation;
+import com.example.userservice.service.UserService;
+import com.example.userservice.service.UserServiceData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -532,12 +532,12 @@ public class UserController {
 
 //// 3 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.dto.JwtAuthenticationResponseDto;
-import com.example.itemservice.domain.dto.SignInRequest;
-import com.example.itemservice.domain.dto.SignUpRequest;
-import com.example.itemservice.service.AuthenticationService;
+import com.example.userservice.domain.dto.JwtAuthenticationResponseDto;
+import com.example.userservice.domain.dto.SignInRequest;
+import com.example.userservice.domain.dto.SignUpRequest;
+import com.example.userservice.service.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -575,9 +575,9 @@ public class AuthController {
 
 // 1 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.model;
+package com.example.userservice.domain.model;
 
-import com.example.itemservice.handlers.Operation;
+import com.example.userservice.handlers.Operation;
 import lombok.*;
 
 import javax.persistence.*;
@@ -640,7 +640,7 @@ public class Item {
 
 /// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.model;
+package com.example.userservice.domain.model;
 
 import lombok.*;
 
@@ -673,7 +673,7 @@ public class JwtAuthenticationResponse {
 
 /// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.model;
+package com.example.userservice.domain.model;
 
 public enum Role {
 
@@ -687,7 +687,7 @@ public enum Role {
 
 /// 4 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.model;
+package com.example.userservice.domain.model;
 
 public enum Status {
 
@@ -701,9 +701,9 @@ public enum Status {
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /// 5 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-package com.example.itemservice.domain.model;
+package com.example.userservice.domain.model;
 
-import com.example.itemservice.handlers.Operation;
+import com.example.userservice.handlers.Operation;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -805,7 +805,7 @@ public class User implements UserDetails {
 
 /// 1 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.dto;
+package com.example.userservice.domain.dto;
 
 import lombok.*;
 
@@ -833,7 +833,7 @@ public class ItemDto {
 
 /// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.dto;
+package com.example.userservice.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -853,7 +853,7 @@ public class JwtAuthenticationResponseDto {
 
 /// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.dto;
+package com.example.userservice.domain.dto;
 
 import lombok.Data;
 
@@ -876,7 +876,7 @@ public class SignInRequest {
 
 //// 4 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.dto;
+package com.example.userservice.domain.dto;
 
 import lombok.Data;
 
@@ -909,7 +909,7 @@ public class SignUpRequest {
 
 /// 5 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.domain.dto;
+package com.example.userservice.domain.dto;
 
 import lombok.*;
 
@@ -938,11 +938,11 @@ public class UserDto {
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.filter;
+package com.example.userservice.filter;
 
-import com.example.itemservice.service.JwtService;
-import com.example.itemservice.service.TokenBlackListServiceData;
-import com.example.itemservice.service.UserServiceData;
+import com.example.userservice.service.JwtService;
+import com.example.userservice.service.TokenBlackListServiceData;
+import com.example.userservice.service.UserServiceData;
 import liquibase.util.StringUtils;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -1025,7 +1025,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 //// 1 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.handlers;
+package com.example.userservice.handlers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -1067,7 +1067,7 @@ public class GlobalExceptionHandler {
 
 /// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.handlers;
+package com.example.userservice.handlers;
 
 public class Operation {
 
@@ -1081,11 +1081,11 @@ public class Operation {
 
 /// 1 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.repository;
+package com.example.userservice.repository;
 
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
 import lombok.NonNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -1117,10 +1117,10 @@ public interface ItemRepository extends CrudRepository<Item, Integer> {
 
 // 2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.repository;
+package com.example.userservice.repository;
 
 
-import com.example.itemservice.domain.model.JwtAuthenticationResponse;
+import com.example.userservice.domain.model.JwtAuthenticationResponse;
 import lombok.NonNull;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -1142,9 +1142,9 @@ public interface TokenBlackListRepository extends CrudRepository<JwtAuthenticati
 
 /// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.repository;
+package com.example.userservice.repository;
 
-import com.example.itemservice.domain.model.User;
+import com.example.userservice.domain.model.User;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -1183,10 +1183,10 @@ import java.util.Optional;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.security;
+package com.example.userservice.security;
 
-import com.example.itemservice.filter.JwtAuthenticationFilter;
-import com.example.itemservice.service.UserServiceData;
+import com.example.userservice.filter.JwtAuthenticationFilter;
+import com.example.userservice.service.UserServiceData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -1277,14 +1277,14 @@ public class SecurityConfiguration {
 
 /// 1 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.dto.JwtAuthenticationResponseDto;
-import com.example.itemservice.domain.model.JwtAuthenticationResponse;
-import com.example.itemservice.domain.dto.SignInRequest;
-import com.example.itemservice.domain.dto.SignUpRequest;
-import com.example.itemservice.domain.model.Role;
-import com.example.itemservice.domain.model.User;
+import com.example.userservice.domain.dto.JwtAuthenticationResponseDto;
+import com.example.userservice.domain.model.JwtAuthenticationResponse;
+import com.example.userservice.domain.dto.SignInRequest;
+import com.example.userservice.domain.dto.SignUpRequest;
+import com.example.userservice.domain.model.Role;
+import com.example.userservice.domain.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -1293,7 +1293,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-import static com.example.itemservice.filter.JwtAuthenticationFilter.BEARER_PREFIX;
+import static com.example.userservice.filter.JwtAuthenticationFilter.BEARER_PREFIX;
 
 @Service
 @RequiredArgsConstructor
@@ -1359,12 +1359,12 @@ public class AuthenticationService {
 
 // 2 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -1401,13 +1401,13 @@ public interface ItemService {
 
 //// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.repository.ItemRepository;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.repository.ItemRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -1503,10 +1503,10 @@ public class ItemServiceData implements ItemService {
 
 /// 4 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
 
-import com.example.itemservice.domain.model.User;
+import com.example.userservice.domain.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -1644,9 +1644,9 @@ public class JwtService {
 
 //// 5 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.model.JwtAuthenticationResponse;
+import com.example.userservice.domain.model.JwtAuthenticationResponse;
 
 import java.util.List;
 import java.util.Optional;
@@ -1664,10 +1664,10 @@ public interface TokenBlackListService {
 
 /// 6 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.model.JwtAuthenticationResponse;
-import com.example.itemservice.repository.TokenBlackListRepository;
+import com.example.userservice.domain.model.JwtAuthenticationResponse;
+import com.example.userservice.repository.TokenBlackListRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -1701,12 +1701,12 @@ public class TokenBlackListServiceData implements TokenBlackListService {
 
 //// 7 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
 
 
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.domain.dto.UserDto;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.UserDto;
 
 import java.util.List;
 import java.util.Optional;
@@ -1741,12 +1741,12 @@ public interface UserService {
 
 //// 8 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.model.Role;
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.domain.dto.UserDto;
-import com.example.itemservice.repository.UserRepository;
+import com.example.userservice.domain.model.Role;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.UserDto;
+import com.example.userservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -1759,8 +1759,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.itemservice.domain.model.Role.ROLE_ADMIN;
-import static com.example.itemservice.domain.model.Role.ROLE_USER;
+import static com.example.userservice.domain.model.Role.ROLE_ADMIN;
+import static com.example.userservice.domain.model.Role.ROLE_USER;
 import static java.util.Collections.emptyList;
 
 @Service
@@ -1954,9 +1954,9 @@ feign.client.config.DaData-api.read-timeout=20000
 /*config*/
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-package com.example.itemservice.feign.config;
+package com.example.userservice.feign.config;
 
-import com.example.itemservice.feign.FeignCustomErrorDecoder;
+import com.example.userservice.feign.FeignCustomErrorDecoder;
 import feign.Logger;
 import feign.RequestInterceptor;
 import feign.codec.ErrorDecoder;
@@ -2007,9 +2007,9 @@ public class CustomFeignClientConfiguration {
 
 /// 1 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
-import com.example.itemservice.feign.config.CustomFeignClientConfiguration;
+import com.example.userservice.feign.config.CustomFeignClientConfiguration;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -2029,7 +2029,7 @@ public interface DaDataApiClient {
 
 /// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -2066,7 +2066,7 @@ public class DaDataController {
 
 /// 3 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -2145,7 +2145,7 @@ public class FeignCustomErrorDecoder implements ErrorDecoder {
 
 //// 4 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.Data;
 
@@ -2164,7 +2164,7 @@ public class FeignExceptionMessage {
 
 /// 5 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -2189,7 +2189,7 @@ public class GetPhoneData {
 
 // 6 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.Data;
 
@@ -2251,7 +2251,7 @@ public class PhoneData {
 
 // 7 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -2280,7 +2280,7 @@ public class PhoneDataDto {
 
 //// 8 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
@@ -2302,7 +2302,7 @@ public class PhoneSource {
 
 //// 9 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;

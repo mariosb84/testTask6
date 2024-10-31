@@ -1,12 +1,12 @@
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.handlers.Operation;
-import com.example.itemservice.service.ItemService;
-import com.example.itemservice.service.UserService;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.handlers.Operation;
+import com.example.userservice.service.ItemService;
+import com.example.userservice.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.slf4j.Logger;
@@ -100,14 +100,14 @@ public class ItemController {
 Java
 
 
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.service.ItemService;
-import com.example.itemservice.service.UserService;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.service.ItemService;
+import com.example.userservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;

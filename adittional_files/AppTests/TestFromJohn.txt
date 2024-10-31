@@ -1,12 +1,12 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.service.ItemService;
-import com.example.itemservice.service.UserService;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.service.ItemService;
+import com.example.userservice.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -96,13 +96,13 @@ public class ItemControllerTest {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.service;
+package com.example.userservice.service;
 
-import com.example.itemservice.domain.dto.ItemDto;
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
-import com.example.itemservice.repository.ItemRepository;
+import com.example.userservice.domain.dto.ItemDto;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
+import com.example.userservice.repository.ItemRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -164,11 +164,11 @@ class ItemServiceTest {
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-package com.example.itemservice.repository;
+package com.example.userservice.repository;
 
-import com.example.itemservice.domain.model.Item;
-import com.example.itemservice.domain.model.Status;
-import com.example.itemservice.domain.model.User;
+import com.example.userservice.domain.model.Item;
+import com.example.userservice.domain.model.Status;
+import com.example.userservice.domain.model.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -211,11 +211,11 @@ public class ItemRepositoryTest {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.controller;
+package com.example.userservice.controller;
 
-import com.example.itemservice.domain.dto.SignInRequest;
-import com.example.itemservice.domain.dto.SignUpRequest;
-import com.example.itemservice.service.AuthenticationService;
+import com.example.userservice.domain.dto.SignInRequest;
+import com.example.userservice.domain.dto.SignUpRequest;
+import com.example.userservice.service.AuthenticationService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;

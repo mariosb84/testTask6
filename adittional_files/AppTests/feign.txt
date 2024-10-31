@@ -1,6 +1,6 @@
 
 // 1 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-package com.example.itemservice;
+package com.example.userservice;
 
 import liquibase.integration.spring.SpringLiquibase;
 import org.springframework.boot.SpringApplication;
@@ -46,9 +46,9 @@ public class ItemServiceApplication extends SpringBootServletInitializer {
 
 /// 2 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign.config;
+package com.example.userservice.feign.config;
 
-import com.example.itemservice.feign.FeignCustomErrorDecoder;
+import com.example.userservice.feign.FeignCustomErrorDecoder;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Logger;
@@ -108,7 +108,7 @@ public class CustomFeignClientConfiguration {
 /// 3 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.Data;
 
@@ -170,9 +170,9 @@ public class PhoneData {
 
 //// 4 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
-import com.example.itemservice.feign.config.CustomFeignClientConfiguration;
+import com.example.userservice.feign.config.CustomFeignClientConfiguration;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -189,7 +189,7 @@ public interface DadataApiClient {
 
 /// 5 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -243,7 +243,7 @@ feign.client.config.dadata-api.read-timeout=20000
 
 /// 7 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -321,7 +321,7 @@ public class FeignCustomErrorDecoder implements ErrorDecoder {
 ////// 8 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-package com.example.itemservice.feign;
+package com.example.userservice.feign;
 
 import lombok.Data;
 
