@@ -1,6 +1,6 @@
 package com.example.userservice.service;
 
-import com.example.userservice.domain.model.UserContacts;
+import com.example.userservice.domain.dto.model.UserContacts;
 import com.example.userservice.repository.UserContactsRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

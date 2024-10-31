@@ -1,6 +1,6 @@
 package com.example.userservice.controller;
 
-import com.example.userservice.domain.model.UserPhoto;
+import com.example.userservice.domain.dto.model.UserPhoto;
 import com.example.userservice.handlers.Operation;
 import com.example.userservice.service.UserPhotoService;
 import lombok.AllArgsConstructor;

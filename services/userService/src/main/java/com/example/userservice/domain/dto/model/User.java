@@ -1,4 +1,4 @@
-package com.example.userservice.domain.model;
+package com.example.userservice.domain.dto.model;
 
 import com.example.userservice.handlers.Operation;
 import lombok.*;
@@ -36,7 +36,7 @@ public class User implements UserDetails {
             Operation.OnCreate.class
     })
     @Size(min = 5, max = 50, message = "UserLastName must be more than 5 and less 50")
-    @Column(name = "person_lastName")
+    @Column(name = "person_lastname")
     private String userLastName;
 
     @NotNull(message = "UserName must be non null", groups = {
@@ -50,13 +50,13 @@ public class User implements UserDetails {
             Operation.OnCreate.class
     })
     @Size(min = 5, max = 50, message = "UserMiddleName must be more than 5 and less 50")
-    @Column(name = "person_middleName")
+    @Column(name = "person_middlename")
     private String userMiddleName;
 
     @NotNull(message = "userBirthDate must be non null", groups = {
             Operation.OnCreate.class
     })
-    @Column(name = "person_userBirthDate")
+    @Column(name = "person_userbirthdate")
     private LocalDate userBirthDate;
 
     @Size(min = 8, max = 255, message = "Password must be more than 8 and less 255")
@@ -64,10 +64,10 @@ public class User implements UserDetails {
     @Column(name = "person_password")
     private String password;
 
-    @OneToOne(mappedBy = "person", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserContacts userContacts;
 
-    @OneToOne(mappedBy = "person", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
     private UserPhoto userPhoto;
 
     @CollectionTable(

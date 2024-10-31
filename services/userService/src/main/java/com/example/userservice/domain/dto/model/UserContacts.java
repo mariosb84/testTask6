@@ -1,4 +1,4 @@
-package com.example.userservice.domain.model;
+package com.example.userservice.domain.dto.model;
 
 import com.example.userservice.handlers.Operation;
 import lombok.*;

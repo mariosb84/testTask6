@@ -1,6 +1,6 @@
 package com.example.userservice.repository;
 
-import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.model.User;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,22 +17,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findAll();
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
-    List<User> findAllUsersByUsername(String username);
+    List<User> findAllUsersByUserName(String username);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
-    List<User> findAllUsersByUsernameContaining(String usernamePart);
+    List<User> findAllUsersByUserNameContaining(String usernamePart);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
-    Optional<User> findUserByUsername(String username);
+    Optional<User> findUserByUserName(String username);
 
-    boolean existsByUserName(String username);
+    boolean existsByUserLastName(String userLastName);
 
-    boolean existsByUserLastName(String username);
+    boolean existsByUserName(String userName);
 
-    boolean existsByUserMiddleName(String username);
-
-    boolean existsByEmail(String email);
-
-    boolean existsByPhone(String phone);
+    boolean existsByUserMiddleName(String userMiddleName);
 
 }

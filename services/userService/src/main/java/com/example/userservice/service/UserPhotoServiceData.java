@@ -1,6 +1,6 @@
 package com.example.userservice.service;
 
-import com.example.userservice.domain.model.UserPhoto;
+import com.example.userservice.domain.dto.model.UserPhoto;
 import com.example.userservice.repository.UserPhotoRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

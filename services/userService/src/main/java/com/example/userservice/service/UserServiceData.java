@@ -1,8 +1,9 @@
 package com.example.userservice.service;
 
-import com.example.userservice.domain.model.Role;
-import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.model.Role;
+import com.example.userservice.domain.dto.model.User;
 import com.example.userservice.domain.dto.UserDto;
+import com.example.userservice.repository.UserContactsRepository;
 import com.example.userservice.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.userservice.domain.model.Role.ROLE_ADMIN;
-import static com.example.userservice.domain.model.Role.ROLE_USER;
+import static com.example.userservice.domain.dto.model.Role.ROLE_ADMIN;
+import static com.example.userservice.domain.dto.model.Role.ROLE_USER;
 import static java.util.Collections.emptyList;
 
 @Service
@@ -27,6 +28,8 @@ public class UserServiceData implements UserService, UserDetailsService {
     private final BCryptPasswordEncoder encoder;
 
     private final UserRepository userRepository;
+
+    private final UserContactsRepository userContactsRepository;
 
 
     @Override
@@ -43,10 +46,16 @@ public class UserServiceData implements UserService, UserDetailsService {
     public Optional<User> add(User user) {
         String email = user.getUserContacts().getEmail();
         String phone = user.getUserContacts().getPhone();
-        if (email != null && (userRepository.existsByEmail(email))) {
+        if (userRepository.existsByUserLastName(user.getUserLastName())
+                && userRepository.existsByUserName(user.getUsername())
+                && userRepository.existsByUserMiddleName(user.getUserMiddleName())
+        ) {
+            throw new RuntimeException("Пользователь с таким именем, фамилией и отчеством, уже существует");
+        }
+        if (email != null && (userContactsRepository.existsByEmail(email))) {
             throw new RuntimeException("Пользователь с таким email уже существует");
         }
-        if (phone != null && (userRepository.existsByPhone(phone))) {
+        if (phone != null && (userContactsRepository.existsByPhone(phone))) {
             throw new RuntimeException("Пользователь с таким номером телефона уже существует");
         }
         user.setRoles(List.of(ROLE_USER));
@@ -89,8 +98,8 @@ public class UserServiceData implements UserService, UserDetailsService {
      * @return пользователь
      */
     @Override
-    public User findUserByUsername(String username) {
-        return userRepository.findUserByUsername(username)
+    public User findUserByUserName(String username) {
+        return userRepository.findUserByUserName(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
     }
 
@@ -105,8 +114,8 @@ public class UserServiceData implements UserService, UserDetailsService {
     }
 
     @Override
-    public List<User> findUserByUsernameContains(String username) {
-        return userRepository.findAllUsersByUsernameContaining(username);
+    public List<User> findUserByUserNameContains(String username) {
+        return userRepository.findAllUsersByUserNameContaining(username);
     }
 
     @Override
@@ -124,7 +133,7 @@ public class UserServiceData implements UserService, UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findUserByUsername(username).orElseThrow();
+        User user = userRepository.findUserByUserName(username).orElseThrow();
         if (user == null) {
             throw new UsernameNotFoundException(username);
         }
@@ -140,7 +149,7 @@ public class UserServiceData implements UserService, UserDetailsService {
      * @return пользователь
      */
     public UserDetailsService userDetailsService() {
-        return this::findUserByUsername;
+        return this::findUserByUserName;
     }
 
     /**
@@ -151,7 +160,7 @@ public class UserServiceData implements UserService, UserDetailsService {
     @Override
     public User getCurrentUser() {
         /* Получение имени пользователя из контекста Spring Security*/
-        return findUserByUsername(SecurityContextHolder.
+        return findUserByUserName(SecurityContextHolder.
                 getContext().getAuthentication().getName());
     }
 

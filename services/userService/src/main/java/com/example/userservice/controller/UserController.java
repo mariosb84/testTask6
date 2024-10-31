@@ -1,6 +1,6 @@
 package com.example.userservice.controller;
 
-import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.model.User;
 import com.example.userservice.domain.dto.UserDto;
 import com.example.userservice.handlers.Operation;
 import com.example.userservice.service.UserService;
@@ -95,7 +95,7 @@ public class UserController {
     @GetMapping("/getCurrentUser")
     public ResponseEntity<User> getCurrentUser(@CurrentSecurityContext(expression = "authentication?.name")
                                                String username) {
-        var person = personsData.findUserByUsername(username);
+        var person = personsData.findUserByUserName(username);
         if (person != null) {
             return new ResponseEntity<>(
                     person,
@@ -108,7 +108,7 @@ public class UserController {
     @PreAuthorize("hasRole('USER') || hasRole('ADMIN')")
     @GetMapping("/findByUserName")
     public ResponseEntity<List<User>> findUsersByUsernameContains(@RequestParam(value = "userName") String userName) {
-        var personsList = this.persons.findUserByUsernameContains(userName);
+        var personsList = this.persons.findUserByUserNameContains(userName);
         if (!personsList.isEmpty()) {
             return new ResponseEntity<>(
                     personsList,

@@ -1,6 +1,6 @@
 package com.example.userservice.service;
 
-import com.example.userservice.domain.model.JwtAuthenticationResponse;
+import com.example.userservice.domain.dto.model.JwtAuthenticationResponse;
 import com.example.userservice.repository.TokenBlackListRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;

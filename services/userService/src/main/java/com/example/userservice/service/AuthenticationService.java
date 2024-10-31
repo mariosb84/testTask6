@@ -1,11 +1,11 @@
 package com.example.userservice.service;
 
 import com.example.userservice.domain.dto.JwtAuthenticationResponseDto;
-import com.example.userservice.domain.model.JwtAuthenticationResponse;
+import com.example.userservice.domain.dto.model.JwtAuthenticationResponse;
 import com.example.userservice.domain.dto.SignInRequest;
 import com.example.userservice.domain.dto.SignUpRequest;
-import com.example.userservice.domain.model.Role;
-import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.model.Role;
+import com.example.userservice.domain.dto.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;

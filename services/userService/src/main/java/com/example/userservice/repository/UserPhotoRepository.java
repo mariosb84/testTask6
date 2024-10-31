@@ -1,6 +1,6 @@
 package com.example.userservice.repository;
 
-import com.example.userservice.domain.model.UserPhoto;
+import com.example.userservice.domain.dto.model.UserPhoto;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

@@ -1,8 +1,8 @@
 package com.example.userservice;
 
-import com.example.userservice.domain.model.User;
-import com.example.userservice.domain.model.UserContacts;
-import com.example.userservice.domain.model.UserPhoto;
+import com.example.userservice.domain.dto.model.User;
+import com.example.userservice.domain.dto.model.UserContacts;
+import com.example.userservice.domain.dto.model.UserPhoto;
 import com.example.userservice.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.userservice.domain.model.Role.;
+import static com.example.userservice.domain.dto.model.Role.;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;

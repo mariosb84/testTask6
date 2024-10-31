@@ -1,6 +1,6 @@
 package com.example.userservice.repository;
 
-import com.example.userservice.domain.model.UserContacts;
+import com.example.userservice.domain.dto.model.UserContacts;
 import lombok.NonNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -17,5 +17,9 @@ public interface UserContactsRepository extends JpaRepository<UserContacts, Long
     Optional<UserContacts> findUserContactsByEmail(String email);
 
     Optional<UserContacts> findUserContactsByPhone(String phone);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByPhone(String phone);
 
 }

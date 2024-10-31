@@ -1,7 +1,7 @@
 package com.example.userservice.service;
 
 
-import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

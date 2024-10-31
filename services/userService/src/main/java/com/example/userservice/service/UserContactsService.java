@@ -1,6 +1,6 @@
 package com.example.userservice.service;
 
-import com.example.userservice.domain.model.UserContacts;
+import com.example.userservice.domain.dto.model.UserContacts;
 
 import java.util.List;
 import java.util.Optional;

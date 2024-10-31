@@ -1,7 +1,7 @@
 package com.example.userservice.service;
 
 
-import com.example.userservice.domain.model.User;
+import com.example.userservice.domain.dto.model.User;
 import com.example.userservice.domain.dto.UserDto;
 
 import java.util.List;
@@ -21,11 +21,11 @@ public interface UserService {
 
     boolean updatePatch(UserDto userDto);
 
-    User findUserByUsername(String username);
+    User findUserByUserName(String username);
 
     User save(User user);
 
-    List<User> findUserByUsernameContains(String username);
+    List<User> findUserByUserNameContains(String username);
 
     Optional<User> setRoleAdmin(long id);
 

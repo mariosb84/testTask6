@@ -19,9 +19,9 @@ public class SignUpRequest {
 
     private String userMiddleName;
 
+    private LocalDate userBirthDate;
+
     @Size(min = 8, max = 255, message = "Длина пароля должна быть от 8 до 255 символов")
     private String password;
-
-    private LocalDate userBirthDate;
 
 }

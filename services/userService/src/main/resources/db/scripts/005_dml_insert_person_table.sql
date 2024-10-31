@@ -1,3 +1,3 @@
-INSERT INTO person(person_lastName, person_login, person_middleName, person_userBirthDate, person_password) VALUES
+INSERT INTO person(person_lastname, person_login, person_middlename, person_userbirthdate, person_password) VALUES
 ('User_Test_LastName', 'User_Test', 'User_Test_MiddleName', '1994-10-31', '$2a$10$zK8v4X5V2N0jlQhEImgweOG8YSvu/9cMHSjVisI7Y9UPo6cOCFjVG'),
 ('Administrator_Test_LastName', 'Administrator_Test', 'Administrator_Test_MiddleName', '1994-10-31', '$2a$10$sp5LkLKgHcrgscYN20vVUe6/Uv2gg5pWPihXeqVi0F6X1QLUMvC.6');

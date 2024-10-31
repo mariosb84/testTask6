@@ -1,6 +1,6 @@
 package com.example.userservice.controller;
 
-import com.example.userservice.domain.model.UserContacts;
+import com.example.userservice.domain.dto.model.UserContacts;
 import com.example.userservice.handlers.Operation;
 import com.example.userservice.service.UserContactsService;
 import lombok.AllArgsConstructor;
