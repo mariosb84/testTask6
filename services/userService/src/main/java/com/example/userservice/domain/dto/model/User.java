@@ -64,10 +64,14 @@ public class User implements UserDetails {
     @Column(name = "person_password")
     private String password;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "person_contacts_id")
+    @NonNull
     private UserContacts userContacts;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "person_photo_id")
+    @NonNull
     private UserPhoto userPhoto;
 
     @CollectionTable(

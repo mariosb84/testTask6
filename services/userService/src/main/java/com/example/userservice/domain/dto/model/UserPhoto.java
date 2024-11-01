@@ -23,11 +23,6 @@ public class UserPhoto {
     })
     private long id;
 
-    @OneToOne
-    @JoinColumn(name = "person_id", unique = true)
-    private User user;
-
-    @Lob
     @Column(name = "person_photo")
     private byte[] photo;
 

@@ -1,9 +1,0 @@
-http://localhost:8080/phoneCheck/
-
-
-
-BODY:
-
- [
-    "моб +79095833078"
- ]

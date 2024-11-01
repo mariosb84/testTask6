@@ -25,10 +25,6 @@ public class UserContacts {
     })
     private long id;
 
-    @OneToOne
-    @JoinColumn(name = "person_id", unique = true)
-    private User user;
-
     @NotNull(message = "Email must be non null")
     @Size(min = 5, max = 255, message = "Email must be more than 5 and less 255")
     @Email(message = "Email адрес должен быть в формате user@example.com")
