@@ -1,11 +1,9 @@
 package com.example.userservice.service;
 
 import com.example.userservice.domain.dto.JwtAuthenticationResponseDto;
-import com.example.userservice.domain.dto.model.JwtAuthenticationResponse;
+import com.example.userservice.domain.dto.model.*;
 import com.example.userservice.domain.dto.SignInRequest;
 import com.example.userservice.domain.dto.SignUpRequest;
-import com.example.userservice.domain.dto.model.Role;
-import com.example.userservice.domain.dto.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,6 +23,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final TokenBlackListServiceData tokenBlackListServiceData;
+    private final UserContactsService userContactsService;
+    private final UserPhotoService userPhotoService;
 
     /**
      * Регистрация пользователя
@@ -40,6 +40,8 @@ public class AuthenticationService {
                 .userMiddleName(request.getUserMiddleName())
                 .userBirthDate(request.getUserBirthDate())
                 .password(passwordEncoder.encode(request.getPassword()))
+                .userContacts(userContactsService.save(new UserContacts()))
+                .userPhoto(userPhotoService.save(new UserPhoto()))
                 .roles(List.of(Role.ROLE_USER))
                 .build();
         userService.add(user);

@@ -25,13 +25,13 @@ public class UserContacts {
     })
     private long id;
 
-    @NotNull(message = "Email must be non null")
-    @Size(min = 5, max = 255, message = "Email must be more than 5 and less 255")
+    /*@NotNull(message = "Email must be non null")*/
+    /*@Size(min = 5, max = 255, message = "Email must be more than 5 and less 255")*/
     @Email(message = "Email адрес должен быть в формате user@example.com")
     @Column(name = "person_email")
     private String email;
 
-    @Size(min = 11, max = 12, message = "Phone must be more than 10 and less 13")
+    /*@Size(min = 11, max = 12, message = "Phone must be more than 10 and less 13")*/
     @Column(name = "person_phone")
     private String phone;
 
