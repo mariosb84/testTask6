@@ -58,7 +58,7 @@ public class UserServiceData implements UserService, UserDetailsService {
         if (phone != null && (userContactsRepository.existsByPhone(phone))) {
             throw new RuntimeException("Пользователь с таким номером телефона уже существует");
         }
-        user.setRoles(List.of(ROLE_USER));
+        user.setRoles((List.of(Role.ROLE_USER)));
         return Optional.ofNullable(save(user));
     }
 

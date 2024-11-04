@@ -16,6 +16,6 @@ public class userServiceApplication extends SpringBootServletInitializer {
     public static void main(String[] args) {
         SpringApplication.run(userServiceApplication.class, args);
 
-    }
+     }
 
 }

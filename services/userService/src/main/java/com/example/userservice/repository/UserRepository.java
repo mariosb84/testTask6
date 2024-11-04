@@ -12,17 +12,17 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"userContacts", "userPhoto", "roles"})
     @NonNull
     List<User> findAll();
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"userContacts", "userPhoto", "roles"})
     List<User> findAllUsersByUserName(String username);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"userContacts", "userPhoto", "roles"})
     List<User> findAllUsersByUserNameContaining(String usernamePart);
 
-    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = "roles")
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH, attributePaths = {"userContacts", "userPhoto", "roles"})
     Optional<User> findUserByUserName(String username);
 
     boolean existsByUserLastName(String userLastName);

@@ -1,3 +1,4 @@
+================================================================================================
 Endpoints:
 ==============
 
@@ -105,50 +106,119 @@ personPhoto:
 
 /*НАЙТИ СПИСОК ВСЕХ personPhoto*/                                                          (+)
 
-http://localhost:8080/personContacts/
+http://localhost:8080/personPhoto/
 
 GET
 ================================================================================================
 /*НАЙТИ ПО ID personPhoto*/                                                                (+)
 
-http://localhost:8080/personContacts/{id}
+http://localhost:8080/personPhoto/{id}
 
 GET
 ================================================================================================
 /*Создать personPhoto*/                                                                    (+)
 
-http://localhost:8080/personContacts/
+http://localhost:8080/personPhoto/
 
 POST
 
 {
-"email" : "user@mail.ru",
-"phone" : "+79111111111"
+"photo" : "AQID"
 }
 ================================================================================================
 /*Обновить personPhoto*/                                                                    (+)
 
-http://localhost:8080/personContacts/
+http://localhost:8080/personPhoto/
 
 PUT
 
 {
-"email" : "user@mail.ru",
-"phone" : "+79111111111"
+"photo" : "AQAD"
 }
 ================================================================================================
 /*Удалить personPhoto*/                                                                    (+)
 
-http://localhost:8080/personContacts/{id}
+http://localhost:8080/personPhoto/{id}
 
 DELETE
 ================================================================================================
-/*Найти personPhoto по Photo*/                                                             (+)
+/*Найти personPhoto по Photo*/                                                             (-)?????????????????
 
-http://localhost:8080/personContacts/findUserContactsByUserEmail?email=user@mail.ru
+http://localhost:8080/personContacts/findUserPhotoByPhoto?photo=AQID
 
 GET
 ================================================================================================
+
+
+
+person:
+==============
+
+
+/*НАЙТИ СПИСОК ВСЕХ person*/                                                          (+)
+
+http://localhost:8080/person/
+
+GET
+================================================================================================
+/*НАЙТИ ПО ID person*/                                                                (+)
+
+http://localhost:8080/person/{id}
+
+GET
+================================================================================================
+/*Создать person*/                                                                    (-)
+
+http://localhost:8080/person/
+
+POST
+
+{
+"userLastName" : "userLastName_NEW",
+"userName" : "userName_NEW",
+"userMiddleName" : "userMiddleName_NEW",
+"userBirthDate" : "1970-01-01",
+"password" : "password_NEW",
+"userContacts" : {
+"email" : "user_NEW@mail.ru",
+"phone" : "+79211122112"
+  },
+"userPhoto" : {
+"photo" : "AQAD"
+  },
+  "roles" : ["ROLE_USER"]
+}
+================================================================================================
+/*Обновить person*/                                                                    (-)
+
+http://localhost:8080/person/
+
+PUT
+
+{
+"photo" : "AQAD"
+}
+================================================================================================
+/*Удалить person*/                                                                    (+)
+
+http://localhost:8080/person/{id}
+
+DELETE
+================================================================================================
+/*Получить текущего  person*/                                                                    (+)
+
+http://localhost:8080/person/getCurrentUser
+
+GET
+================================================================================================
+================================================================================================
+/*Найти person по имени*/                                                             (+)
+
+http://localhost:8080/person/findByUserName?userName=username
+
+GET
+================================================================================================
+========================================================================================================
 
 
 
