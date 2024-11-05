@@ -44,7 +44,7 @@ public class AuthenticationService {
                 .userPhoto(userPhotoService.save(new UserPhoto()))
                 .roles(List.of(Role.ROLE_USER))
                 .build();
-        userService.add(user);
+        userService.add(userService.getUserAdditionDtoFromUser(user));
 
         var jwt = jwtService.generateToken(user);
         return new JwtAuthenticationResponseDto(jwt);

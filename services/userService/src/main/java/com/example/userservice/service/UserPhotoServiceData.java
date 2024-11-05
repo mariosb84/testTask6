@@ -5,6 +5,7 @@ import com.example.userservice.repository.UserPhotoRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,8 +43,9 @@ public class UserPhotoServiceData implements UserPhotoService {
     }
 
     @Override
-    public Optional<UserPhoto> findUserPhotoByUserPhoto(byte[] photo) {
-        return userPhotoRepository.findUserPhotoByPhoto(photo);
+    public Optional<UserPhoto> findUserPhotoByUserPhoto(String photo) {
+        byte[] byteArray= Base64.getDecoder().decode(photo);
+        return userPhotoRepository.findUserPhotoByPhoto(byteArray);
     }
 
     @Override

@@ -17,7 +17,7 @@ public interface UserPhotoService {
 
     boolean delete(UserPhoto userPhoto);
 
-    Optional<UserPhoto> findUserPhotoByUserPhoto(byte[] photo);
+    Optional<UserPhoto> findUserPhotoByUserPhoto(String photo);
 
     UserPhoto save(UserPhoto userPhoto);
 

@@ -42,6 +42,8 @@ POST
 } ;
 
 ================================================================================================
+
+================================================================================================
 Endpoints:
 ==============
 
@@ -52,7 +54,7 @@ Auth:
 Использованные данные, в качестве примера : {id}=1;{phone}=+79111111111;{email}=email@mail.ru;
 {name}=User_Test;{password} : 12345678900;{name}=Administrator_Test;{password} : 12345678902;
 ================================================================================================
-/*АВТОРИЗАЦИЯ*/                                                                              (+)
+1)_/*АВТОРИЗАЦИЯ*/                                                                        
 
 http://localhost:8080/auth/sign-in/
 
@@ -63,7 +65,7 @@ POST
 "password" : "password"
 }
 ================================================================================================
-/*ДОБАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ*/                                                                  (+)
+2)_/*ДОБАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ*/                                                             
 
 http://localhost:8080/auth/sign-up/
 
@@ -77,7 +79,7 @@ POST
 "password" : "password"
 }
 ================================================================================================
-/*ВЫХОД(LOGOUT)*/                                                                             (+)
+3)_/*ВЫХОД(LOGOUT)*/                                                                       
 
 http://localhost:8080/auth/auth_logout/
 
@@ -89,19 +91,19 @@ personContacts:
 ==============
 
 
-/*НАЙТИ СПИСОК ВСЕХ personContacts*/                                                          (+)
+4)_/*НАЙТИ СПИСОК ВСЕХ personContacts*/                                                    
 
 http://localhost:8080/personContacts/
 
 GET
 ================================================================================================
-/*НАЙТИ ПО ID personContacts*/                                                                (+)
+5)_/*НАЙТИ ПО ID personContacts*/                                                          
 
 http://localhost:8080/personContacts/{id}
 
 GET
 ================================================================================================
-/*Создать personContacts*/                                                                    (+)
+6)_/*Создать personContacts*/                                                              
 
 http://localhost:8080/personContacts/
 
@@ -112,30 +114,30 @@ POST
 "phone" : "+79111111111"
 }
 ================================================================================================
-/*Обновить personContacts*/                                                                    (+)
+7)_/*Обновить personContacts*/                                                             
 
 http://localhost:8080/personContacts/
 
 PUT
 
 {
-"email" : "user@mail.ru",
-"phone" : "+79111111111"
+"email" : "user@mail.ru_Upd",
+"phone" : "+79111111111_Upd"
 }
 ================================================================================================
-/*Удалить personContacts*/                                                                    (+)
+8)_/*Удалить personContacts*/                                                              
 
 http://localhost:8080/personContacts/{id}
 
 DELETE
 ================================================================================================
-/*Найти personContacts по email*/                                                             (+)
+9)_/*Найти personContacts по email*/                                                       
 
 http://localhost:8080/personContacts/findUserContactsByUserEmail?email=user@mail.ru
 
 GET
 ================================================================================================
-/*Найти personContacts по phone*/                                                             (+)
+10)_/*Найти personContacts по phone*/                                                      
 
 http://localhost:8080/personContacts/findUserContactsByUserPhone?phone=89111111111
 
@@ -147,19 +149,19 @@ personPhoto:
 ==============
 
 
-/*НАЙТИ СПИСОК ВСЕХ personPhoto*/                                                          (+)
+11)_/*НАЙТИ СПИСОК ВСЕХ personPhoto*/                                                      
 
 http://localhost:8080/personPhoto/
 
 GET
 ================================================================================================
-/*НАЙТИ ПО ID personPhoto*/                                                                (+)
+12)_/*НАЙТИ ПО ID personPhoto*/                                                            
 
 http://localhost:8080/personPhoto/{id}
 
 GET
 ================================================================================================
-/*Создать personPhoto*/                                                                    (+)
+13)_/*Создать personPhoto*/                                                                
 
 http://localhost:8080/personPhoto/
 
@@ -169,7 +171,7 @@ POST
 "photo" : "AQID"
 }
 ================================================================================================
-/*Обновить personPhoto*/                                                                    (+)
+14)_/*Обновить personPhoto*/                                                               
 
 http://localhost:8080/personPhoto/
 
@@ -179,16 +181,16 @@ PUT
 "photo" : "AQAD"
 }
 ================================================================================================
-/*Удалить personPhoto*/                                                                    (+)
+15)_/*Удалить personPhoto*/                                                                
 
 http://localhost:8080/personPhoto/{id}
 
 DELETE
 ================================================================================================
-/*Найти personPhoto по Photo*/                                                             (-)
+16)_/*Найти personPhoto по Photo*/                                                        
 
-http://localhost:8080/personContacts/findUserPhotoByPhoto?photo=AQID
-
+http://localhost:8080/personPhoto/findUserPhotoByPhoto?photo=AQID
+(вставляем фото в виде строки, закодированной в формате "BASE - 64")
 GET
 ================================================================================================
 
@@ -198,65 +200,83 @@ person:
 ==============
 
 
-/*НАЙТИ СПИСОК ВСЕХ person*/                                                          (+)
+17)_/*НАЙТИ СПИСОК ВСЕХ person*/                                                          
 
 http://localhost:8080/person/
 
 GET
 ================================================================================================
-/*НАЙТИ ПО ID person*/                                                                (+)
+18)_/*НАЙТИ ПО ID person*/                                                                
 
 http://localhost:8080/person/{id}
 
 GET
 ================================================================================================
-/*Создать person*/                                                                    (-)
+19)_/*Создать person*/                                                                    
 
 http://localhost:8080/person/
 
 POST
 
 {
-"userLastName" : "userLastName",
-"userName" : "userName",
-"userMiddleName" : "userMiddleName",
+"userLastName" : "userLastName_NEW",
+"userName" : "userName_NEW",
+"userMiddleName" : "userMiddleName_NEW",
 "userBirthDate" : "1970-01-01",
-"password" : "password",
-"userContacts" : "",
-"userPhoto" : "",
-"roles" : "",
+"password" : "password_NEW",
+"userContacts" : {
+"email" : "user_NEW@mail.ru",
+"phone" : "+79211122112"
+},
+"userPhoto" : {
+"photo" : "AQAD"
+}
 }
 ================================================================================================
-/*Обновить person*/                                                                    (-)
+20)_/*Обновить person*/                                                                    
 
 http://localhost:8080/person/
 
 PUT
 
+
 {
+"userLastName" : "userLastName_NEW_UPDATED",
+"userName" : "userName_NEW_UPDATED",
+"userMiddleName" : "userMiddleName_NEW_UPDATED",
+"userBirthDate" : "1970-01-01",
+"password" : "password_NEW_UPDATED",
+"userContacts" : {
+"email" : "user_NEW_UPDATED@mail.ru",
+"phone" : "+79211122119"
+},
+"userPhoto" : {
 "photo" : "AQAD"
 }
+}
 ================================================================================================
-/*Удалить person*/                                                                    (+)
+21)_/*Удалить person*/                                                                    
 
 http://localhost:8080/person/{id}
 
 DELETE
 ================================================================================================
-/*Получить текущего  person*/                                                                    (+)
+22)_/*Получить текущего  person*/                                                         
 
 http://localhost:8080/person/getCurrentUser
 
 GET
 ================================================================================================
 ================================================================================================
-/*Найти person по имени*/                                                             (+)
+23)_/*Найти person по имени*/                                                             
 
-http://localhost:8080/person/findByUserName?userName=username
+http://localhost:8080/person/findByUserName?userName=userName
 
 GET
 ================================================================================================
-========================================================================================================
+================================================================================================
+
+================================================================================================
 
 
 Стек технологий : Java 17; PostgreSQL 14;spring-boot 2.7.14;.
@@ -264,4 +284,4 @@ GET
 
 Контакты : mariosb84@mail.ru .
 
-========================================================================================================
+=================================================================================================

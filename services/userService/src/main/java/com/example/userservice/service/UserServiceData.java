@@ -1,5 +1,6 @@
 package com.example.userservice.service;
 
+import com.example.userservice.domain.dto.UserAdditionDto;
 import com.example.userservice.domain.dto.model.Role;
 import com.example.userservice.domain.dto.model.User;
 import com.example.userservice.domain.dto.UserDto;
@@ -13,12 +14,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
 import java.util.List;
 import java.util.Optional;
 
-import static com.example.userservice.domain.dto.model.Role.ROLE_ADMIN;
-import static com.example.userservice.domain.dto.model.Role.ROLE_USER;
 import static java.util.Collections.emptyList;
 
 @Service
@@ -43,7 +41,8 @@ public class UserServiceData implements UserService, UserDetailsService {
      * @return созданный пользователь
      */
     @Override
-    public Optional<User> add(User user) {
+    public Optional<User> add(UserAdditionDto userAdditionDto) {
+        User user = getUserFromUserAdditionDto(userAdditionDto);
         String email = user.getUserContacts().getEmail();
         String phone = user.getUserContacts().getPhone();
         if (userRepository.existsByUserLastName(user.getUserLastName())
@@ -58,12 +57,12 @@ public class UserServiceData implements UserService, UserDetailsService {
         if (phone != null && (userContactsRepository.existsByPhone(phone))) {
             throw new RuntimeException("Пользователь с таким номером телефона уже существует");
         }
-        user.setRoles((List.of(Role.ROLE_USER)));
         return Optional.ofNullable(save(user));
     }
 
     @Override
-    public boolean update(User user) {
+    public boolean update(UserAdditionDto userAdditionDto) {
+        User user = getUserFromUserAdditionDto(userAdditionDto);
         userRepository.save(user);
         return userRepository.findById(user.getId()).isPresent();
 
@@ -86,7 +85,8 @@ public class UserServiceData implements UserService, UserDetailsService {
         if (person.isPresent()) {
             User result = person.get();
             result.setPassword(encoder.encode(userDto.getPassword()));
-            this.add(result);
+            UserAdditionDto userResultDto = getUserAdditionDtoFromUser(result);
+            this.add(userResultDto);
             return true;
         }
         return false;
@@ -172,8 +172,45 @@ public class UserServiceData implements UserService, UserDetailsService {
     @Deprecated
     public void getAdmin() {
         var user = getCurrentUser();
-        user.setRoles(List.of(ROLE_ADMIN));
+        user.setRoles(List.of(Role.ROLE_ADMIN));
         save(user);
+    }
+
+    /**
+     * Получаем User из UserAdditionDto
+     *
+     *  @return модель User
+     */
+    @Override
+   public User getUserFromUserAdditionDto(UserAdditionDto userAdditionDto) {
+        var user = new User();
+        user.setUserLastName(userAdditionDto.getUserLastName());
+        user.setUserName(userAdditionDto.getUserName());
+        user.setUserMiddleName(userAdditionDto.getUserMiddleName());
+        user.setUserBirthDate(userAdditionDto.getUserBirthDate());
+        user.setPassword(encoder.encode(userAdditionDto.getPassword()));
+        user.setUserContacts(userAdditionDto.getUserContacts());
+        user.setUserPhoto(userAdditionDto.getUserPhoto());
+        user.setRoles(List.of(Role.ROLE_USER));
+        return user;
+    }
+
+    /**
+     * Получаем UserAdditionDto из User
+     *
+     *  @return dto UserAdditionDto
+     */
+    @Override
+    public UserAdditionDto getUserAdditionDtoFromUser(User user) {
+        var userAdditionDto = new UserAdditionDto();
+        userAdditionDto.setUserLastName(user.getUserLastName());
+        userAdditionDto.setUserName(user.getUsername());
+        userAdditionDto.setUserMiddleName(user.getUserMiddleName());
+        userAdditionDto.setUserBirthDate(user.getUserBirthDate());
+        userAdditionDto.setPassword(encoder.encode(user.getPassword()));
+        userAdditionDto.setUserContacts(user.getUserContacts());
+        userAdditionDto.setUserPhoto(user.getUserPhoto());
+        return userAdditionDto;
     }
 
 }

@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.util.Base64;
 import java.util.List;
 
 @AllArgsConstructor
@@ -79,7 +78,7 @@ public class UserPhotoController {
 
     @PreAuthorize("hasRole('USER') || hasRole('ADMIN')")
     @GetMapping("/findUserPhotoByPhoto")
-    public ResponseEntity<UserPhoto> findUserPhotoByPhotoContains(@RequestParam(value = "photo") byte[] photo) {
+    public ResponseEntity<UserPhoto> findUserPhotoByPhotoContains(@RequestParam(value = "photo")  String photo) {
         var personsPhoto = this.userPhotoService.findUserPhotoByUserPhoto(photo);
         if (personsPhoto.isPresent()) {
             return new ResponseEntity<UserPhoto>(

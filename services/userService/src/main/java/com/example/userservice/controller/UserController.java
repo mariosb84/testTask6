@@ -1,7 +1,7 @@
 package com.example.userservice.controller;
 
+import com.example.userservice.domain.dto.UserAdditionDto;
 import com.example.userservice.domain.dto.model.User;
-import com.example.userservice.domain.dto.UserDto;
 import com.example.userservice.handlers.Operation;
 import com.example.userservice.service.UserService;
 import com.example.userservice.service.UserServiceData;
@@ -51,18 +51,18 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/")
     @Validated(Operation.OnCreate.class)
-    public ResponseEntity<User> create(@Valid @RequestBody User user) {
-        if (user.getUsername() == null || user.getPassword() == null) {
+    public ResponseEntity<User> create(@Valid @RequestBody UserAdditionDto person) {
+        if (person.getUserName() == null || person.getPassword() == null) {
             throw new NullPointerException("Login and password mustn't be empty");
         }
-        if (user.getPassword().length() < 3
-                || user.getPassword().isEmpty()
-                || user.getPassword().isBlank()) {
+        if (person.getPassword().length() < 3
+                || person.getPassword().isEmpty()
+                || person.getPassword().isBlank()) {
             throw new IllegalArgumentException(
                     "Invalid password. Password length must be more than 3 characters.");
         }
-        user.setPassword(encoder.encode(user.getPassword()));
-        var result = this.persons.add(user);
+        person.setPassword(encoder.encode(person.getPassword()));
+        var result = this.persons.add(person);
         return new ResponseEntity<User>(
                 result.orElse(new User()),
                 result.isPresent() ? HttpStatus.CREATED : HttpStatus.CONFLICT
@@ -72,8 +72,8 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/")
     @Validated(Operation.OnUpdate.class)
-    public ResponseEntity<Boolean> update(@Valid @RequestBody UserDto person) {
-        if ((this.persons.updatePatch(person))) {
+    public ResponseEntity<Boolean> update(@Valid @RequestBody UserAdditionDto person) {
+        if ((this.persons.update(person))) {
             return ResponseEntity.ok().build();
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Объект не обновлен!");

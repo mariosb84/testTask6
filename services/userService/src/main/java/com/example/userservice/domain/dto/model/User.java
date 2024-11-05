@@ -65,13 +65,13 @@ public class User implements UserDetails {
     private String password;
 
     /*- делаем через @EntityGraph в методах репозитория*/
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "person_contacts_id")
     @NonNull
     private UserContacts userContacts;
 
     /*- делаем через @EntityGraph в методах репозитория*/
-    @OneToOne(fetch = FetchType.EAGER)
+    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinColumn(name = "person_photo_id")
     @NonNull
     private UserPhoto userPhoto;

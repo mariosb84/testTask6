@@ -1,6 +1,7 @@
 package com.example.userservice.service;
 
 
+import com.example.userservice.domain.dto.UserAdditionDto;
 import com.example.userservice.domain.dto.model.User;
 import com.example.userservice.domain.dto.UserDto;
 
@@ -11,9 +12,9 @@ public interface UserService {
 
     List<User> findAll();
 
-    Optional<User> add(User user);
+    Optional<User> add(UserAdditionDto userAdditionDto);
 
-    boolean update(User user);
+    boolean update(UserAdditionDto userAdditionDto);
 
     Optional<User> findById(long id);
 
@@ -30,5 +31,9 @@ public interface UserService {
     Optional<User> setRoleAdmin(long id);
 
     User getCurrentUser();
+
+    User getUserFromUserAdditionDto(UserAdditionDto userAdditionDto);
+
+    UserAdditionDto getUserAdditionDtoFromUser(User user);
 
 }
