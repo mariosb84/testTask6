@@ -1,3 +1,0 @@
-INSERT INTO person(person_lastname, person_login, person_middlename, person_userbirthdate, person_password, person_contacts_id, person_photo_id) VALUES
-('User_Test_LastName', 'User_Test', 'User_Test_MiddleName', '1994-10-31', '$2a$10$zK8v4X5V2N0jlQhEImgweOG8YSvu/9cMHSjVisI7Y9UPo6cOCFjVG', 1, 1),
-('Administrator_Test_LastName', 'Administrator_Test', 'Administrator_Test_MiddleName', '1994-10-31', '$2a$10$sp5LkLKgHcrgscYN20vVUe6/Uv2gg5pWPihXeqVi0F6X1QLUMvC.6', 2, 2);
