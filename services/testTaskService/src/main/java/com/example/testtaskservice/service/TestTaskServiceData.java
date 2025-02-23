@@ -133,4 +133,76 @@ public class TestTaskServiceData implements TestTaskService {
         }
     }
 
+    /*
+    * Улучшенный вариант:
+    * В задаче на нахождение N-го максимального элемента алгоритм QuickSelect действительно является хорошим выбором,
+    *  так как он в среднем работает за O(n). Однако реализация, представленная у тебя, имеет несколько недочетов:
+
+Недостатки реализации QuickSelect в коде:
+Проблема с разбиением на left и right списки
+
+В реализации создаются два списка, что требует дополнительной памяти O(n).
+Более эффективный вариант: переставлять элементы на месте в исходном массиве.
+Выбор pivot всегда последним элементом
+
+Это может ухудшить производительность, если данные уже частично отсортированы.
+Оптимальнее использовать рандомный выбор pivot или медиану трех элементов.
+Обработка случая k == left.size()
+
+В коде return pivot; используется без учета дубликатов, что может дать неверный ответ.
+Как можно улучшить?
+Использовать "in-place QuickSelect", который не требует доп. памяти и работает быстрее. Вот исправленная версия:
+
+Оптимизированный QuickSelect
+java
+Копировать
+Редактировать
+private static int quickSelect(List<Integer> nums, int k) {
+    return quickSelectHelper(nums, 0, nums.size() - 1, k);
+}
+
+private static int quickSelectHelper(List<Integer> nums, int left, int right, int k) {
+    Random rand = new Random();
+
+    while (left <= right) {
+        int pivotIndex = left + rand.nextInt(right - left + 1);
+        int pivot = nums.get(pivotIndex);
+        int partitionIndex = partition(nums, left, right, pivot);
+
+        if (partitionIndex == k) {
+            return nums.get(partitionIndex);
+        } else if (partitionIndex < k) {
+            left = partitionIndex + 1;
+        } else {
+            right = partitionIndex - 1;
+        }
+    }
+    return -1; // Этот return никогда не достигнется
+}
+
+private static int partition(List<Integer> nums, int left, int right, int pivot) {
+    while (left <= right) {
+        while (nums.get(left) < pivot) {
+            left++;
+        }
+        while (nums.get(right) > pivot) {
+            right--;
+        }
+        if (left <= right) {
+            Collections.swap(nums, left, right);
+            left++;
+            right--;
+        }
+    }
+    return left;
+}
+Почему этот вариант лучше?
+Работает на месте – O(1) дополнительной памяти.
+Средняя сложность O(n), что быстрее кучи O(n log n).
+Использует рандомизированный выбор pivot, что избегает худших случаев O(n²).
+Заключение
+Да, правильный выбор был QuickSelect, но твоя реализация неоптимальна из-за дополнительных списков
+*  и фиксированного pivot. Улучшенная версия работает быстрее и эффективнее по памяти.
+* */
+
 }
